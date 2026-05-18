@@ -1,0 +1,6 @@
+model Image {
+    id Int @id @default(autoincrement())
+    url String @db.VarChar(255)
+    postId Int
+    post Post @relation(fields: [postId], references: [id])
+}

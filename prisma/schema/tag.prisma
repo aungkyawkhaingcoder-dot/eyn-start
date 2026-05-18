@@ -1,0 +1,13 @@
+model Tag {
+    id Int @id @default(autoincrement())
+    name String
+    taggables Taggable[]
+}
+
+model Taggable {
+   id Int @id @default(autoincrement())
+   tagId Int
+   tag Tag @relation(fields: [tagId], references: [id]) 
+   type String @db.VarChar(7)
+   typeId Int
+}
