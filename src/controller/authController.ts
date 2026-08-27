@@ -1,0 +1,21 @@
+
+import { confirmPasswordValidation, validateOtp, validatePhone } from "../validation/authValidation";
+import {
+  confirmPasswordHandler,
+  loginHandler,
+  registerUserHandler,
+  verifyOtpHandler,
+} from "../ControllerHandler/authHandlers";
+import { withValidation } from "../utils";
+
+
+export const registerUser = withValidation(validatePhone, registerUserHandler);
+
+export const verifyOtp = withValidation(
+  [...validatePhone, ...validateOtp],
+  verifyOtpHandler
+);
+
+export const confirmPassword = withValidation(confirmPasswordValidation, confirmPasswordHandler);
+
+export const login = withValidation([], loginHandler);

@@ -8,7 +8,8 @@ const helmet_1 = __importDefault(require("helmet"));
 const compression_1 = __importDefault(require("compression"));
 const cors_1 = __importDefault(require("cors"));
 const morgan_1 = __importDefault(require("morgan"));
-const reateLimiter_1 = require("./middleware/reateLimiter");
+const raterLimiter_1 = require("./middleware/raterLimiter");
+const auth_1 = __importDefault(require("./routes/v1/auth"));
 const app = (0, express_1.default)();
 app.use((0, morgan_1.default)("combined"));
 app.use(express_1.default.urlencoded({ extended: true }));
@@ -16,7 +17,9 @@ app.use(express_1.default.json());
 app.use((0, cors_1.default)());
 app.use((0, helmet_1.default)());
 app.use((0, compression_1.default)({}));
-app.use(reateLimiter_1.limiter);
+app.use(raterLimiter_1.limiter);
+// Routes
+app.use('/api/v1', auth_1.default);
 app.use((error, req, res, next) => {
     const status = error.status || 500;
     const message = error.message || "Server Error";

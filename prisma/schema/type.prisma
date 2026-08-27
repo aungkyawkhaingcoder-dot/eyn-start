@@ -1,6 +1,6 @@
-model Type{
-    id Int @id @default(autoincrement())
-    name String
-    posts Post[]
-    products Product[]
+model Type {
+  id       Int       @id @default(autoincrement())
+  name     String
+  posts    Post[]
+  products Product[]
 }

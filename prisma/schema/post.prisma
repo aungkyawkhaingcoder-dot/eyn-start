@@ -1,15 +1,15 @@
 model Post {
-  id Int @id @default(autoincrement())
-  title String
-  content String
-  body String
-  authorId Int
-  author User @relation(fields: [authorId], references: [id])
+  id         Int      @id @default(autoincrement())
+  title      String
+  content    String
+  body       String
+  authorId   Int
   categoryId Int
-  category Category @relation(fields: [categoryId], references: [id])
-  typeId Int
-  type Type @relation(fields: [typeId], references: [id])
-  images Image[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  typeId     Int
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  images     Image[]
+  author     User     @relation(fields: [authorId], references: [id])
+  category   Category @relation(fields: [categoryId], references: [id])
+  type       Type     @relation(fields: [typeId], references: [id])
 }

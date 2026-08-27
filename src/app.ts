@@ -4,8 +4,7 @@ import compression from "compression";
 import cors from "cors";
 import morgan from "morgan";
 import { limiter } from "./middleware/raterLimiter";
-import { check } from "./middleware/check";
-import userRoutes from "./routes/userRoutes";
+import authRouter from './routes/v1/auth';
 
 const app:Express = express();
 app.use(morgan("combined"));
@@ -17,8 +16,7 @@ app.use(compression({}));
 app.use(limiter);
 
 // Routes
-app.use("/api/users", userRoutes);
-app.use("/api/users", check); // Apply check middleware to user routes
+app.use('/api/v1',authRouter)
 
 app.use((error:any,req:Request,res:Response,next:NextFunction)=>{
     const status = error.status || 500;

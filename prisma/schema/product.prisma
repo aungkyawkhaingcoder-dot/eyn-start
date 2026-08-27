@@ -1,19 +1,18 @@
 model Product {
-    id Int @id @default(autoincrement())
-    name String @db.VarChar(255)
-    description String
-    price Float
-    discount Decimal @default(0) @db.Decimal(10, 2)
-    rating Int @default(0)
-    inventory Int @default(0)
-    status Status @default(ACTIVE)
-    typeId Int
-    type Type @relation(fields: [typeId], references: [id])
-    categoryId Int
-    category Category @relation(fields: [categoryId], references: [id])
-    productImage Image[]
-    orders ProductsOnOrder[]
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+  id           Int               @id @default(autoincrement())
+  name         String            @db.VarChar(255)
+  description  String
+  price        Float
+  discount     Decimal           @default(0) @db.Decimal(10, 2)
+  rating       Int               @default(0)
+  inventory    Int               @default(0)
+  status       Status            @default(ACTIVE)
+  typeId       Int
+  categoryId   Int
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  productImage Image[]
+  category     Category          @relation(fields: [categoryId], references: [id])
+  type         Type              @relation(fields: [typeId], references: [id])
+  orders       ProductsOnOrder[]
 }
-
