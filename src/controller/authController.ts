@@ -1,5 +1,5 @@
 
-import { confirmPasswordValidation, validateOtp, validatePhone } from "../validation/authValidation";
+import { confirmPasswordValidation, loginValidation, validateOtp, validatePhone } from "../validation/authValidation";
 import {
   confirmPasswordHandler,
   loginHandler,
@@ -18,4 +18,4 @@ export const verifyOtp = withValidation(
 
 export const confirmPassword = withValidation(confirmPasswordValidation, confirmPasswordHandler);
 
-export const login = withValidation([], loginHandler);
+export const login = withValidation(loginValidation, loginHandler);

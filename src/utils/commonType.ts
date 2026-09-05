@@ -44,6 +44,7 @@ export interface ConfirmPasswordResponseBody {
 export interface LoginResponseBody {
   message: string;
   token?: string;
+  id: number | string
   user?: {
     id: number;
     phone: string;

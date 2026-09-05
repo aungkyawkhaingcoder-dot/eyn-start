@@ -28,4 +28,6 @@ enum Status {
   ACTIVE
   INACTIVE
   SUSPENDED
+  FREEZE
+  BAN
 }

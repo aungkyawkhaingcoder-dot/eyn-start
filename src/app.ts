@@ -5,7 +5,8 @@ import cors from "cors";
 import morgan from "morgan";
 import { limiter } from "./middleware/raterLimiter";
 import authRouter from './routes/v1/auth';
-
+import userRouter from "./routes/admin/userRoute";
+import { authMiddleware } from "./middleware/auth";
 const app:Express = express();
 app.use(morgan("combined"));
 app.use(express.urlencoded({ extended: true }));
@@ -17,6 +18,7 @@ app.use(limiter);
 
 // Routes
 app.use('/api/v1',authRouter)
+app.use('/api/v1/admin',authMiddleware,userRouter)
 
 app.use((error:any,req:Request,res:Response,next:NextFunction)=>{
     const status = error.status || 500;

@@ -31,11 +31,13 @@ import {
   OTP_EXPIRY_MINUTES,
   normalizePhone,
   BCRYPT_SALT_ROUNDS,
+  checkUserExistNot,
 } from "../utils";
 import bcrypt from "bcrypt";
 import moment from "moment";
 import jwt from "jsonwebtoken";
 import "dotenv/config";
+import { error } from "node:console";
 
 
 
@@ -218,15 +220,15 @@ export const confirmPasswordHandler = async (
 
   await updateUser(newuser.id, { randomToken: refreshToken })
 
-  res.cookie('accessToken',accessToken,{
-    httpOnly:true,
-    secure: process.env.NODE_ENV === 'development' ?  false : true,
-    sameSite:'none',
-    maxAge: 15 * 60 * 1000 , // 15 minute
-  }).cookie('refreshToken',refreshToken,{
-    httpOnly:true,
-    secure: process.env.NODE_ENV === 'development' ?  false : true,
-    sameSite:'none',
+  res.cookie('accessToken', accessToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'development' ? false : true,
+    sameSite: 'none',
+    maxAge: 15 * 60 * 1000, // 15 minute
+  }).cookie('refreshToken', refreshToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'development' ? false : true,
+    sameSite: 'none',
     maxAge: 30 * 24 * 60 * 60 * 1000
   }).status(201).json({ message: "SuccessFully created an account", userId: newuser.id, });
 };
@@ -236,5 +238,79 @@ export const loginHandler = async (
   res: Response<LoginResponseBody>,
   next: NextFunction
 ): Promise<void> => {
-  res.status(200).json({ message: "login" });
+  const { phone, password } = req.body
+  const user = await getUserByPhone(phone)
+  //check user is not register
+  checkUserExistNot(user);
+  //check freeze wrong password is overlimit
+  if (user?.status === "FREEZE") {
+    const error = new Error('Your account is temponary lock , please contact us ') as CustomError
+    error.status = 401;
+    error.code = "ERROR_FREEZE"
+  }
+
+  const isMatchPassword = await bcrypt.compare(password, user?.password!);
+
+  if (!isMatchPassword) {
+    //start recording worng time
+    const lastRequest = new Date(user!.updatedAt).toLocaleDateString();
+    const isSameDate = lastRequest === new Date().toLocaleDateString();
+    // Today password is wrong first time
+    if (!isSameDate) {
+      const userData = {
+        errorLoginCount: 1,
+      }
+
+      await updateUser(user?.id!, userData)
+    } else {
+      //today password was wrong 6 times will be freeze
+      if (user!.errorLoginCount >= 6) {
+        await (user?.id, {
+          status: "FREEZE"
+        })
+
+      } else {
+        // increase wrong count
+        await updateUser(user!.id, {
+          errorLoginCount: {
+            increment: 1
+          }
+        })
+      }
+    }
+    // end --------------------
+
+
+   const error = new Error('Password is wrong') as CustomError
+         error.status= 401
+         error.code = 'ERROR_INVALID'
+  }
+
+  const accessTokenPayload = { id: user!.id };
+  const refreshTokenPayload = { id: user!.id, phone: user!.phone };
+  const accessToken = jwt.sign(accessTokenPayload, process.env.ACCESS_TOKEN_SECRET!, {
+    expiresIn: 60 * 15 // 15 minute,
+  });
+
+  const refreshToken = jwt.sign(refreshTokenPayload, process.env.REFRESH_TOKEN_SECRET!, {
+    expiresIn: '30d' // 30
+  })
+  const userData = {
+      errorLoginCount:0, //reset error count
+      randomToken: refreshToken
+  }
+  await updateUser(user!.id,userData);
+
+
+  res.cookie('accessToken', accessToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'development' ? false : true,
+    sameSite: 'none',
+    maxAge: 15 * 60 * 1000, // 15 minute
+  }).cookie('refreshToken', refreshToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'development' ? false : true,
+    sameSite: 'none',
+    maxAge: 30 * 24 * 60 * 60 * 1000
+  }).status(200).json({ message: "SuccessFully Logged In", id: user!.id, });
 };

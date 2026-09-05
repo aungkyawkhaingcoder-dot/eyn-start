@@ -22,7 +22,7 @@ export const updateUser = async (id: number, data: Prisma.UserUpdateInput) => {
   });
 };
 
-export const getUserByPhone = async (phone: string) => {
+export const getUserByPhone = async (phone: string): Promise<Prisma.UserGetPayload<{}> | null> => {
   return await prisma.user.findUnique({ where: { phone } });
 };
 

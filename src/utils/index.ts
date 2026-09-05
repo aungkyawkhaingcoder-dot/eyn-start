@@ -59,6 +59,13 @@ export const createError = (
   return error;
 };
 
+
+export const checkUserExistNot = (user: any) => {
+  if (!user) {
+    throw createError('This phone has not registered', 401, 'Error_Unauthenicated');
+  }
+}
+
 export const checkUserExist = (user: any) => {
   if (user) {
     throw createError(
