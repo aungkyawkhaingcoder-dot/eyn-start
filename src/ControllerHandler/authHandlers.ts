@@ -203,7 +203,7 @@ export const confirmPasswordHandler = async (
 
   const userdata = {
     phone: phone,
-    password: hashPassword,
+    password: hashPassword.toString(),
     randomToken: tempRandomToken,
   }
 
@@ -218,7 +218,7 @@ export const confirmPasswordHandler = async (
     expiresIn: '30d'
   })
 
-  await updateUser(newuser.id, { randomToken: refreshToken })
+  await updateUser(newuser.id, { randomToken: refreshToken.toString()})
 
   res.cookie('accessToken', accessToken, {
     httpOnly: true,
@@ -252,7 +252,6 @@ export const loginHandler = async (
   const isMatchPassword = await bcrypt.compare(password, user?.password!);
 
   if (!isMatchPassword) {
-    //start recording worng time
     const lastRequest = new Date(user!.updatedAt).toLocaleDateString();
     const isSameDate = lastRequest === new Date().toLocaleDateString();
     // Today password is wrong first time

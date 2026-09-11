@@ -14,7 +14,7 @@ export const confirmPasswordValidation = [
     body("password", "Invalid password")
         .trim().notEmpty().matches('^[0-9]+$')
         .withMessage("Password is required")
-        .isLength({ min: 8 , max: 8 }),
+        .isLength({ min: 8 , max: 8 }).withMessage("Password must be 8 digits"),
     body('phone', 'Invalid phone number').trim().notEmpty().withMessage('Phone number is required').matches("^[0-9]+$").isLength({ min: 5, max: 12 }).withMessage('Phone number must be between 5 and 12 digits'),
     body("token", "Invalid token").trim().notEmpty().escape()
 ]

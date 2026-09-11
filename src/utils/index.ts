@@ -21,8 +21,9 @@ export const handleValidationErrors = (
       status: 400,
       code: "Error",
     });
-    next(error);
+   return next(error);
   }
+  next();
 };
 
 export const withValidation = (
@@ -30,10 +31,9 @@ export const withValidation = (
   handler: (req: Request, res: Response, next: NextFunction) => Promise<void>
 ): RequestHandler[] => [
     ...validations,
-    async (req: Request, res: Response, next: NextFunction) => {
-      handleValidationErrors(req, res, next);
-      return handler(req, res, next);
-    },
+      handleValidationErrors,
+      handler,
+    
   ];
 
 
