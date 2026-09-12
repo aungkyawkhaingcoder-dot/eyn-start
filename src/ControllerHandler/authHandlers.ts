@@ -359,6 +359,8 @@ export const logoutHandler = async (
 
 }
 
+
+// refresh token handler
 export const refreshTokenHandler = async (
   req: Request,
   res: Response, next: NextFunction): Promise<void> => {
