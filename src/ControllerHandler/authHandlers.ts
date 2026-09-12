@@ -7,6 +7,7 @@ import {
   getUserByPhone,
   createUser,
   updateUser,
+  getUserById,
 } from "../services/authservices";
 import {
   ConfirmPasswordRequestBody,
@@ -218,7 +219,7 @@ export const confirmPasswordHandler = async (
     expiresIn: '30d'
   })
 
-  await updateUser(newuser.id, { randomToken: refreshToken.toString()})
+  await updateUser(newuser.id, { randomToken: refreshToken.toString() })
 
   res.cookie('accessToken', accessToken, {
     httpOnly: true,
@@ -280,9 +281,9 @@ export const loginHandler = async (
     // end --------------------
 
 
-   const error = new Error('Password is wrong') as CustomError
-         error.status= 401
-         error.code = 'ERROR_INVALID'
+    const error = new Error('Password is wrong') as CustomError
+    error.status = 401
+    error.code = 'ERROR_INVALID'
   }
 
   const accessTokenPayload = { id: user!.id };
@@ -295,10 +296,10 @@ export const loginHandler = async (
     expiresIn: '30d' // 30
   })
   const userData = {
-      errorLoginCount:0, //reset error count
-      randomToken: refreshToken
+    errorLoginCount: 0, //reset error count
+    randomToken: refreshToken
   }
-  await updateUser(user!.id,userData);
+  await updateUser(user!.id, userData);
 
 
   res.cookie('accessToken', accessToken, {
@@ -313,3 +314,106 @@ export const loginHandler = async (
     maxAge: 30 * 24 * 60 * 60 * 1000
   }).status(200).json({ message: "SuccessFully Logged In", id: user!.id, });
 };
+
+export const logoutHandler = async (
+  req: Request,
+  res: Response, next: NextFunction): Promise<void> => {
+
+  //clear httponly cookie
+  const refreshToken = req.cookies ? req.cookies.refreshToken : null;
+  if (!refreshToken) {
+    const error = new Error('You are not an authenticated user.') as CustomError;
+    error.status = 401
+    error.code = 'Error_Unauthenticated'
+    return next(error);
+  }
+  let decoded;
+  try {
+    decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET!) as {
+      id: number | string;
+      phone: string;
+    }
+  } catch (err) {
+    const error = new Error('Invalid refresh token.') as CustomError;
+    error.status = 401
+    error.code = 'Error_Unauthenticated'
+    return next(error);
+
+  }
+  const user = await getUserById(Number(decoded!.id));
+  checkUserExistNot(user);
+
+  if (user!.phone !== decoded!.phone) {
+    const error = new Error('Invalid refresh token.') as CustomError;
+    error.status = 401
+    error.code = 'Error_Unauthenticated'
+    return next(error);
+  }
+  const userData = {
+    randomToken: generateToken()
+  }
+  await updateUser(user!.id, userData);
+  res.clearCookie('accessToken');
+  res.clearCookie('refreshToken');
+  res.status(200).json({ message: "SuccessFully Logged Out. See you soon!" });
+
+}
+
+export const refreshTokenHandler = async (
+  req: Request,
+  res: Response, next: NextFunction): Promise<void> => {
+  const accessTokenMobile = req.headers.authorization?.split(' ')[1] || null;
+  const refreshTokenMobile = req.headers['x-refresh-token'] as string || null;
+  let decodedRefreshToken;
+  try {
+    decodedRefreshToken = jwt.verify(refreshTokenMobile!, process.env.REFRESH_TOKEN_SECRET!) as {
+      phone: string;
+      id: number | string;
+    }
+  }
+  catch (err: any) {
+    if (err.name === "TokenExpiredError") {
+      const error = new Error('Your are not an authenticated user.') as CustomError;
+      error.status = 401
+      error.code = 'Error_Unauthenticated'
+      return next(error);
+    } else {
+      const error = new Error('Invalid refresh token.') as CustomError;
+      error.status = 401
+      error.code = 'Error_Unauthenticated'
+      return next(error);
+    }
+  }
+
+  const user = await getUserById(Number(decodedRefreshToken.id));
+  checkUserExistNot(user);
+  if (user!.phone !== decodedRefreshToken.phone) {
+    const error = new Error('Invalid refresh token.') as CustomError;
+    error.status = 401
+    error.code = 'Error_Unauthenticated'
+    return next(error);
+  }
+  if (user!.randomToken !== refreshTokenMobile) {
+    const error = new Error('Invalid refresh token.') as CustomError;
+    error.status = 401
+    error.code = 'Error_Unauthenticated'
+    return next(error);
+  }
+
+  const accessTokenPayload = { id: user!.id };
+  const refreshTokenPayload = { id: user!.id, phone: user!.phone };
+  const accessToken = jwt.sign(accessTokenPayload, process.env.ACCESS_TOKEN_SECRET!, {
+    expiresIn: 60 * 15 // 15 minute,
+  });
+
+  const refreshToken = jwt.sign(refreshTokenPayload, process.env.REFRESH_TOKEN_SECRET!, {
+    expiresIn: '30d' // 30
+  })
+  const userData = {
+    //reset error count
+    randomToken: refreshToken
+  }
+  await updateUser(user!.id, userData);
+  res.status(200).json({ message: "SuccessFully Refreshed Token", accessToken, refreshToken });
+
+}

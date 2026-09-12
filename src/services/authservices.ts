@@ -26,7 +26,9 @@ export const getUserByPhone = async (phone: string): Promise<Prisma.UserGetPaylo
   return await prisma.user.findUnique({ where: { phone } });
 };
 
-
+export const getUserById = async (id: number): Promise<Prisma.UserGetPayload<{}> | null> => {
+  return await prisma.user.findUnique({ where: { id } });
+};
 
 
 export const createOtpData = async (otpdata: Prisma.OtpCreateInput) => {

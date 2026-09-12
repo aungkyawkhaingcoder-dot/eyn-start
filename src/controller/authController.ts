@@ -3,6 +3,8 @@ import { confirmPasswordValidation, loginValidation, validateOtp, validatePhone 
 import {
   confirmPasswordHandler,
   loginHandler,
+  logoutHandler,
+  refreshTokenHandler,
   registerUserHandler,
   verifyOtpHandler,
 } from "../ControllerHandler/authHandlers";
@@ -19,3 +21,7 @@ export const verifyOtp = withValidation(
 export const confirmPassword = withValidation(confirmPasswordValidation, confirmPasswordHandler);
 
 export const login = withValidation(loginValidation, loginHandler);
+
+export const logout = logoutHandler;
+
+export const refreshToken = refreshTokenHandler;

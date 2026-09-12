@@ -1,7 +1,11 @@
 import { NextFunction,Request,Response } from "express";
-
-export  const getUserHandler = (req:Request,res:Response,next:NextFunction)=>{ 
+interface CustomRequest extends Request{
+    userId?: number | string;
+}
+export  const getUserHandler = (req:CustomRequest,res:Response,next:NextFunction)=>{ 
+    const userId = req.userId;
     res.status(200).json({
         message: "All Users",
+        currentUserId: userId
     })
 }
