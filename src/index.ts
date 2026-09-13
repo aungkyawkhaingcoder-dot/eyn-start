@@ -1,7 +1,27 @@
 import "dotenv/config";
 import app from "./app";
+import { readRefreshConfig } from "./auth/refresh/config";
+import { closeBrowserSessions } from "./auth/refresh/browserSession";
+
+// Fail startup for a typo/missing URL instead of silently selecting another strategy.
+readRefreshConfig();
 const PORT = process.env.PORT || 4000;
-// Change the import to reference the correct file extension for TypeScript source:
-app.listen(PORT,()=>{
-    console.log("server listing "+PORT)
-})
+const server = app.listen(PORT, () => console.log("server listening " + PORT));
+
+let stopping = false;
+function shutdown() {
+  if (stopping) return;
+  stopping = true;
+  const timeout = setTimeout(() => process.exit(1), 10_000);
+  timeout.unref();
+  server.close(async () => {
+    try {
+      await closeBrowserSessions();
+      process.exit(0);
+    } catch {
+      process.exit(1);
+    }
+  });
+}
+process.once("SIGINT", shutdown);
+process.once("SIGTERM", shutdown);

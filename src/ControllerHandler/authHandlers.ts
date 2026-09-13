@@ -1,5 +1,6 @@
+import { resolveMobileSession } from "../auth/refresh/browserSession";
 import { Request, Response, NextFunction } from "express";
-import { authenticateRefreshToken, rotateSession, startSession } from "../auth/session";
+import { authenticateRefreshToken, startSession } from "../auth/session";
 import { clearAuthCookies, readMobileRefreshToken, readTokens, sendAuthResponse } from "../auth/transport";
 import { unauthenticated } from "../auth/tokens";
 import { createError } from "../utils";
@@ -234,8 +235,8 @@ export const logoutHandler = async (req: Request, res: Response): Promise<void> 
 
 // This endpoint remains mobile-only and accepts the existing x-refresh-token header.
 export const refreshTokenHandler = async (req: Request, res: Response): Promise<void> => {
-  const user = await authenticateRefreshToken(readMobileRefreshToken(req));
-  const tokens = await rotateSession(user);
+  const session = await resolveMobileSession(readMobileRefreshToken(req), true);
+  const tokens = session.tokens;
   res.setHeader("Cache-Control", "no-store");
   res.status(200).json({ message: "SuccessFully Refreshed Token", ...tokens });
 };

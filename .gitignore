@@ -14,7 +14,6 @@ node_modules
 # dependencies lock
 package-lock.json
 yarn.lock
-pnpm-lock.yaml
 
 # testing
 /coverage
@@ -38,6 +37,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel

@@ -20,6 +20,23 @@ const services = {
 const servicePath = require.resolve('../src/services/authservices.ts');
 require.cache[servicePath] = { id: servicePath, filename: servicePath, loaded: true, exports: services };
 const { issueTokens } = require('../src/auth/tokens.ts');
+// Unit tests use the real shared rotation policy with in-memory coordination.
+// tests/refresh.integration.cjs separately exercises both real Redis/BullMQ strategies.
+const { fixture } = require('./helpers/refresh-fixture.cjs');
+let shared;
+const browserPath = require.resolve('../src/auth/refresh/browserSession.ts');
+require.cache[browserPath] = { id: browserPath, filename: browserPath, loaded: true, exports: {
+  async resolveMobileSession(token, needsRefresh) {
+    return require.cache[browserPath].exports.resolveBrowserSession(token, needsRefresh);
+  },
+  async resolveBrowserSession(token, needsRefresh) {
+    shared.records.set(user.id, user);
+    const session = await shared.rotation.authenticate(token);
+    if (session.tokens || !needsRefresh) return session;
+    await shared.rotation.execute(token);
+    return shared.rotation.authenticate(token);
+  },
+} };
 const { authMiddleware } = require('../src/middleware/auth.ts');
 const { loginHandler, refreshTokenHandler, logoutHandler } = require('../src/ControllerHandler/authHandlers.ts');
 function response() {
@@ -35,6 +52,7 @@ function request(mobile = false, expired = false) {
 beforeEach(() => {
   user = { id: 1, phone: '912345678', status: 'ACTIVE', updatedAt: new Date(), errorLoginCount: 0, password: bcrypt.hashSync('12345678', 4) };
   writes = [];
+  shared = fixture();
 });
 test('valid browser token calls next exactly once', async () => {
   const req = request(); const calls = [];
@@ -67,16 +85,37 @@ test('rejects malformed claims and revoked refresh tokens', async () => {
   const req = request(); user.randomToken = 'revoked'; let error;
   await authMiddleware(req, response(), e => error = e); assert.equal(error.status, 401);
 });
-test('refresh rotates and old token cannot refresh or logout', async () => {
+test('mobile refresh shares recent result but stale token cannot logout', async () => {
   const req = request(true); const res = response();
   await refreshTokenHandler(req, res); assert.ok(res.body.accessToken);
-  await assert.rejects(refreshTokenHandler(req, response()));
+  const late = response();
+  await refreshTokenHandler(req, late);
+  assert.equal(late.body.refreshToken, res.body.refreshToken);
   await assert.rejects(logoutHandler(req, response()));
 });
-test('concurrent refresh has one winner', async () => {
+test('concurrent mobile refresh returns one pair with one DB update', async () => {
   const req = request(true);
-  const results = await Promise.allSettled([refreshTokenHandler(req, response()), refreshTokenHandler(req, response())]);
-  assert.equal(results.filter(r => r.status === 'fulfilled').length, 1);
+  const responses = [response(), response(), response()];
+  await Promise.all(responses.map(res => refreshTokenHandler(req, res)));
+  assert.equal(new Set(responses.map(res => res.body.refreshToken)).size, 1);
+  assert.equal(shared.writes, 1);
+  assert.ok(responses.every(res => res.cookies.length === 0));
+});
+test('mobile in-flight old pair requests shared refresh then succeeds with new headers', async () => {
+  const req = request(true);
+  const res = response(); await refreshTokenHandler(req, res);
+  let error; await authMiddleware(req, response(), e => error = e);
+  assert.equal(error.code, 'Error_AccessTokenExpired');
+  const retry = { headers: { ...req.headers, authorization: `Bearer ${res.body.accessToken}`,
+    'x-refresh-token': res.body.refreshToken } };
+  const calls = []; await authMiddleware(retry, response(), e => calls.push(e));
+  assert.deepEqual(calls, [undefined]); assert.equal(retry.userId, user.id);
+});
+test('mobile refresh rejects revoked and missing tokens', async () => {
+  const req = request(true); await refreshTokenHandler(req, response());
+  user.randomToken = 'revoked';
+  await assert.rejects(refreshTokenHandler(req, response()), e => e.status === 401);
+  await assert.rejects(refreshTokenHandler({ headers: {} }, response()));
 });
 test('wrong password cannot issue tokens and sixth failure freezes', async () => {
   user.errorLoginCount = 5; const res = response(); let error;
@@ -94,4 +133,25 @@ test('mobile login returns tokens and normalizes phone', async () => {
   await loginHandler({ body: { phone: `09${user.phone}`, password: '12345678' }, headers: { 'x-platform': 'mobile' } }, res, e => { throw e; });
   assert.equal(res.body.refreshToken, user.randomToken); assert.ok(res.body.accessToken);
   assert.equal(res.cookies.length, 0);
+});
+
+test('parallel browser requests and late stale cookies share a single pair', async () => {
+  const req = request(false, true);
+  const responses = [response(), response(), response()];
+  const calls = [];
+  await Promise.all(responses.map(res => authMiddleware({ ...req }, res, e => calls.push(e))));
+  assert.deepEqual(calls, [undefined, undefined, undefined]);
+  assert.equal(shared.writes, 1);
+  assert.equal(new Set(responses.map(res => res.cookies[1][1])).size, 1);
+  const late = response();
+  await authMiddleware({ ...req }, late, e => { if (e) throw e; });
+  assert.equal(late.cookies[1][1], responses[0].cookies[1][1]);
+});
+test('cached browser result cannot restore a revoked session', async () => {
+  const req = request(false, true);
+  await authMiddleware(req, response(), e => { if (e) throw e; });
+  user.randomToken = 'revoked';
+  let error;
+  await authMiddleware({ ...req, userId: undefined }, response(), e => error = e);
+  assert.equal(error.status, 401);
 });
