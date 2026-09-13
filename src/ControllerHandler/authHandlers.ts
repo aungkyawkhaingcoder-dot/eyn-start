@@ -1,5 +1,8 @@
 import { Request, Response, NextFunction } from "express";
-import { Prisma } from "../generated/prisma/client";
+import { authenticateRefreshToken, rotateSession, startSession } from "../auth/session";
+import { clearAuthCookies, readMobileRefreshToken, readTokens, sendAuthResponse } from "../auth/transport";
+import { unauthenticated } from "../auth/tokens";
+import { createError } from "../utils";
 import {
   createOtpData,
   updateOtpData,
@@ -7,13 +10,11 @@ import {
   getUserByPhone,
   createUser,
   updateUser,
-  getUserById,
+  replaceRefreshToken,
 } from "../services/authservices";
 import {
   ConfirmPasswordRequestBody,
-  CustomError,
   LoginRequestBody,
-  LoginResponseBody,
   RegisterUserRequestBody,
   RegisterUserResponseBody,
   VerifyOtpRequestBody,
@@ -24,7 +25,6 @@ import {
   checkOtpLimit,
   checkOtpRow,
   checkUserExist,
-  generateOtp,
   generateToken,
   isSameDay,
   MAX_OTP_REQUESTS_PER_DAY,
@@ -32,14 +32,10 @@ import {
   OTP_EXPIRY_MINUTES,
   normalizePhone,
   BCRYPT_SALT_ROUNDS,
-  checkUserExistNot,
 } from "../utils";
 import bcrypt from "bcrypt";
 import moment from "moment";
-import jwt from "jsonwebtoken";
 import "dotenv/config";
-import { error } from "node:console";
-
 
 
 export const registerUserHandler = async (
@@ -53,8 +49,8 @@ export const registerUserHandler = async (
   checkUserExist(user);
 
   const token = generateToken();
-  // const otp = generateOtp();
-  const otp = 123456
+  // Existing development stub: connect an SMS sender before using generateOtp().
+  const otp = 123456;
   const hashSalt = await bcrypt.genSalt(BCRYPT_SALT_ROUNDS);
   const hashedOtp = await bcrypt.hash(otp.toString(), hashSalt);
 
@@ -118,22 +114,15 @@ export const verifyOtpHandler = async (
     await updateOtpData(otpRow!.id, {
       error: MAX_OTP_ERRORS_PER_DAY,
     });
-    const error = new Error("Invalid token") as CustomError;
-    error.status = 400;
-    error.code = "Error_Invalid_Token";
-    return next(error);
+    return next(createError("Invalid token", 400, "Error_Invalid_Token"));
   }
 
   const isExpired =
     Date.now() - new Date(otpRow!.updatedAt).getTime() >
     OTP_EXPIRY_MINUTES * 60 * 1000;
   if (isExpired) {
-    const error = new Error(
-      "OTP has expired. Please request a new one."
-    ) as CustomError;
-    error.status = 403;
-    error.code = "Error_OTP_Expired";
-    return next(error);
+    return next(createError(
+      "OTP has expired. Please request a new one.", 403, "Error_OTP_Expired"));
   }
 
   const isMatchOtp = await bcrypt.compare(otp, otpRow!.otp);
@@ -142,10 +131,7 @@ export const verifyOtpHandler = async (
       error: isSameDate ? { increment: 1 } : 1,
       ...(isSameDate ? {} : { count: 1 }),
     });
-    const error = new Error("OTP is incorrect") as CustomError;
-    error.status = 400;
-    error.code = "Error_Incorrect_OTP";
-    return next(error);
+    return next(createError("OTP is incorrect", 400, "Error_Incorrect_OTP"));
   }
 
   const verifyToken = generateToken();
@@ -167,255 +153,91 @@ export const confirmPasswordHandler = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  const { token, phone, password } = req.body
-  const user = await getUserByPhone(normalizePhone(phone))
-  checkUserExist(user)
-  const otpRow = await getOtpByPhone(normalizePhone(phone))
+  const { token, password } = req.body;
+  const phone = normalizePhone(req.body.phone);
+  const user = await getUserByPhone(phone);
+  checkUserExist(user);
+  const otpRow = await getOtpByPhone(phone);
   checkOtpRow(otpRow);
 
-  // otp error count is Over limit
+  // Reject blocked OTP verification attempts.
   if (otpRow?.error === MAX_OTP_ERRORS_PER_DAY) {
-    const error = new Error('This request may be and attack.') as CustomError;
-    error.status = 400;
-    error.code = "Error_OverLimit";
-    return next(error);
+    return next(createError('This request may be and attack.', 400, "Error_OverLimit"));
   }
-  //check verify token is Match
-  const isMatchToken = otpRow?.verifyToken === token
+  // Require the token issued after successful OTP verification.
+  const isMatchToken = otpRow?.verifyToken === token;
   if (!isMatchToken) {
-    const error = new Error('Invalid token') as CustomError;
-    error.status = 400;
-    error.code = "Error_Invalid_Token";
-    return next(error);
+    return next(createError('Invalid token', 400, "Error_Invalid_Token"));
   }
 
-  //request is expired
+  // Password confirmation must follow recent OTP verification.
   const isExpired = moment().diff(otpRow.updatedAt, 'minutes') > 10;
   if (isExpired) {
-    const error = new Error('Your request is expired') as CustomError
-    error.status = 403;
-    error.code = 'Error_Expired';
-    return next(error)
+    return next(createError('Your request is expired', 403, 'Error_Expired'));
   }
 
-  const salt = await bcrypt.genSalt(10);
+  const salt = await bcrypt.genSalt(BCRYPT_SALT_ROUNDS);
   const hashPassword = await bcrypt.hash(password, salt);
-  const tempRandomToken = "temp_token_will_be_replaced";
+  const tempRandomToken = generateToken();
 
   const userdata = {
-    phone: phone,
+    phone,
     password: hashPassword.toString(),
     randomToken: tempRandomToken,
-  }
+  };
 
   const newuser = await createUser(userdata);
-  const accessTokenPayload = { id: newuser.id };
-  const refreshTokenPayload = { id: newuser.id, phone: newuser.phone };
-  const accessToken = jwt.sign(accessTokenPayload, process.env.ACCESS_TOKEN_SECRET!, {
-    expiresIn: 60 * 15,
-  });
-
-  const refreshToken = jwt.sign(refreshTokenPayload, process.env.REFRESH_TOKEN_SECRET!, {
-    expiresIn: '30d'
-  })
-
-  await updateUser(newuser.id, { randomToken: refreshToken.toString() })
-
-  res.cookie('accessToken', accessToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'development' ? false : true,
-    sameSite: 'none',
-    maxAge: 15 * 60 * 1000, // 15 minute
-  }).cookie('refreshToken', refreshToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'development' ? false : true,
-    sameSite: 'none',
-    maxAge: 30 * 24 * 60 * 60 * 1000
-  }).status(201).json({ message: "SuccessFully created an account", userId: newuser.id, });
+  const tokens = await startSession(newuser);
+  sendAuthResponse(req, res, tokens, {
+    message: "SuccessFully created an account", userId: newuser.id,
+  }, 201);
 };
 
 export const loginHandler = async (
   req: Request<unknown, unknown, LoginRequestBody>,
-  res: Response<LoginResponseBody>,
-  next: NextFunction
+  res: Response,
+  next: NextFunction,
 ): Promise<void> => {
-  const { phone, password } = req.body
-  const user = await getUserByPhone(phone)
-  //check user is not register
-  checkUserExistNot(user);
-  //check freeze wrong password is overlimit
-  if (user?.status === "FREEZE") {
-    const error = new Error('Your account is temponary lock , please contact us ') as CustomError
-    error.status = 401;
-    error.code = "ERROR_FREEZE"
+  const { password } = req.body;
+  const user = await getUserByPhone(normalizePhone(req.body.phone));
+  if (!user) throw createError("This phone has not registered", 401, "Error_Unauthenicated");
+
+  if (user.status === "FREEZE") {
+    return next(createError("Your account is temporarily locked. Please contact us.", 401, "ERROR_FREEZE"));
   }
 
-  const isMatchPassword = await bcrypt.compare(password, user?.password!);
-
-  if (!isMatchPassword) {
-    const lastRequest = new Date(user!.updatedAt).toLocaleDateString();
-    const isSameDate = lastRequest === new Date().toLocaleDateString();
-    // Today password is wrong first time
-    if (!isSameDate) {
-      const userData = {
-        errorLoginCount: 1,
-      }
-
-      await updateUser(user?.id!, userData)
-    } else {
-      //today password was wrong 6 times will be freeze
-      if (user!.errorLoginCount >= 6) {
-        await (user?.id, {
-          status: "FREEZE"
-        })
-
-      } else {
-        // increase wrong count
-        await updateUser(user!.id, {
-          errorLoginCount: {
-            increment: 1
-          }
-        })
-      }
-    }
-    // end --------------------
-
-
-    const error = new Error('Password is wrong') as CustomError
-    error.status = 401
-    error.code = 'ERROR_INVALID'
+  if (!await bcrypt.compare(password, user.password)) {
+    const sameDay = isSameDay(user.updatedAt, new Date());
+    const attempts = sameDay ? user.errorLoginCount + 1 : 1;
+    await updateUser(user.id, {
+      errorLoginCount: attempts,
+      ...(attempts >= 6 ? { status: "FREEZE" as const } : {}),
+    });
+    return next(createError("Password is wrong", 401, "ERROR_INVALID"));
   }
 
-  const accessTokenPayload = { id: user!.id };
-  const refreshTokenPayload = { id: user!.id, phone: user!.phone };
-  const accessToken = jwt.sign(accessTokenPayload, process.env.ACCESS_TOKEN_SECRET!, {
-    expiresIn: 60 * 15 // 15 minute,
+  const tokens = await startSession(user);
+  sendAuthResponse(req, res, tokens, {
+    message: "SuccessFully Logged In", id: user.id,
   });
-
-  const refreshToken = jwt.sign(refreshTokenPayload, process.env.REFRESH_TOKEN_SECRET!, {
-    expiresIn: '30d' // 30
-  })
-  const userData = {
-    errorLoginCount: 0, //reset error count
-    randomToken: refreshToken
-  }
-  await updateUser(user!.id, userData);
-
-
-  res.cookie('accessToken', accessToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'development' ? false : true,
-    sameSite: 'none',
-    maxAge: 15 * 60 * 1000, // 15 minute
-  }).cookie('refreshToken', refreshToken, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'development' ? false : true,
-    sameSite: 'none',
-    maxAge: 30 * 24 * 60 * 60 * 1000
-  }).status(200).json({ message: "SuccessFully Logged In", id: user!.id, });
 };
 
-export const logoutHandler = async (
-  req: Request,
-  res: Response, next: NextFunction): Promise<void> => {
-
-  //clear httponly cookie
-  const refreshToken = req.cookies ? req.cookies.refreshToken : null;
-  if (!refreshToken) {
-    const error = new Error('You are not an authenticated user.') as CustomError;
-    error.status = 401
-    error.code = 'Error_Unauthenticated'
-    return next(error);
+export const logoutHandler = async (req: Request, res: Response): Promise<void> => {
+  const { refreshToken } = readTokens(req);
+  const user = await authenticateRefreshToken(refreshToken);
+  if (!await replaceRefreshToken(user.id, user.randomToken, generateToken())) {
+    throw unauthenticated();
   }
-  let decoded;
-  try {
-    decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET!) as {
-      id: number | string;
-      phone: string;
-    }
-  } catch (err) {
-    const error = new Error('Invalid refresh token.') as CustomError;
-    error.status = 401
-    error.code = 'Error_Unauthenticated'
-    return next(error);
-
-  }
-  const user = await getUserById(Number(decoded!.id));
-  checkUserExistNot(user);
-
-  if (user!.phone !== decoded!.phone) {
-    const error = new Error('Invalid refresh token.') as CustomError;
-    error.status = 401
-    error.code = 'Error_Unauthenticated'
-    return next(error);
-  }
-  const userData = {
-    randomToken: generateToken()
-  }
-  await updateUser(user!.id, userData);
-  res.clearCookie('accessToken');
-  res.clearCookie('refreshToken');
+  clearAuthCookies(res);
   res.status(200).json({ message: "SuccessFully Logged Out. See you soon!" });
+};
 
-}
+// This endpoint remains mobile-only and accepts the existing x-refresh-token header.
+export const refreshTokenHandler = async (req: Request, res: Response): Promise<void> => {
+  const user = await authenticateRefreshToken(readMobileRefreshToken(req));
+  const tokens = await rotateSession(user);
+  res.setHeader("Cache-Control", "no-store");
+  res.status(200).json({ message: "SuccessFully Refreshed Token", ...tokens });
+};
 
 
-// refresh token handler
-export const refreshTokenHandler = async (
-  req: Request,
-  res: Response, next: NextFunction): Promise<void> => {
-  const accessTokenMobile = req.headers.authorization?.split(' ')[1] || null;
-  const refreshTokenMobile = req.headers['x-refresh-token'] as string || null;
-  let decodedRefreshToken;
-  try {
-    decodedRefreshToken = jwt.verify(refreshTokenMobile!, process.env.REFRESH_TOKEN_SECRET!) as {
-      phone: string;
-      id: number | string;
-    }
-  }
-  catch (err: any) {
-    if (err.name === "TokenExpiredError") {
-      const error = new Error('Your are not an authenticated user.') as CustomError;
-      error.status = 401
-      error.code = 'Error_Unauthenticated'
-      return next(error);
-    } else {
-      const error = new Error('Invalid refresh token.') as CustomError;
-      error.status = 401
-      error.code = 'Error_Unauthenticated'
-      return next(error);
-    }
-  }
-
-  const user = await getUserById(Number(decodedRefreshToken.id));
-  checkUserExistNot(user);
-  if (user!.phone !== decodedRefreshToken.phone) {
-    const error = new Error('Invalid refresh token.') as CustomError;
-    error.status = 401
-    error.code = 'Error_Unauthenticated'
-    return next(error);
-  }
-  if (user!.randomToken !== refreshTokenMobile) {
-    const error = new Error('Invalid refresh token.') as CustomError;
-    error.status = 401
-    error.code = 'Error_Unauthenticated'
-    return next(error);
-  }
-
-  const accessTokenPayload = { id: user!.id };
-  const refreshTokenPayload = { id: user!.id, phone: user!.phone };
-  const accessToken = jwt.sign(accessTokenPayload, process.env.ACCESS_TOKEN_SECRET!, {
-    expiresIn: 60 * 15 // 15 minute,
-  });
-
-  const refreshToken = jwt.sign(refreshTokenPayload, process.env.REFRESH_TOKEN_SECRET!, {
-    expiresIn: '30d' // 30
-  })
-  const userData = {
-    //reset error count
-    randomToken: refreshToken
-  }
-  await updateUser(user!.id, userData);
-  res.status(200).json({ message: "SuccessFully Refreshed Token", accessToken, refreshToken });
-
-}

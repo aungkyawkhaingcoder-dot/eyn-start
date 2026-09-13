@@ -9,7 +9,8 @@ router.post('/confirm-password', confirmPassword)
 router.post('/login', login)
 router.post('/logout', logout);
 
-// Refresh Token Route for mobile 
+// Refresh Token Route for mobile
 router.post('/refresh-token', refreshToken);
+// Compatibility for existing mobile clients; migrate callers to POST.
+router.get('/refresh-token', refreshToken);
 export default router
- 

@@ -47,3 +47,12 @@ export const updateOtpData = async (id: number, data: Prisma.OtpUpdateInput) => 
 export const getOtpByPhone = async (phone: string) => {
   return await prisma.otp.findUnique({ where: { phone } });
 }
+
+// Compare-and-swap prevents concurrent refreshes from both consuming one token.
+export const replaceRefreshToken = async (id: number, previous: string, replacement: string) => {
+  const result = await prisma.user.updateMany({
+    where: { id, randomToken: previous },
+    data: { randomToken: replacement },
+  });
+  return result.count === 1;
+};
