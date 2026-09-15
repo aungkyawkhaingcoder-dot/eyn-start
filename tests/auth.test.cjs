@@ -72,6 +72,31 @@ test('expired mobile access token returns stable error without rotation', async 
   assert.equal(error.code, 'Error_AccessTokenExpired'); assert.equal(error.status, 401);
   assert.equal(user.randomToken, old); assert.equal(req.userId, undefined);
 });
+test('email-only browser sessions rotate expired or absent access cookies and continue', async () => {
+  user.phone = null; user.email = 'email-user@example.com';
+  for (const absent of [false, true]) {
+    const req = request(false, true);
+    if (absent) delete req.cookies.accessToken;
+    const previous = user.randomToken;
+    const res = response(); const calls = [];
+    await authMiddleware(req, res, e => calls.push(e));
+    assert.deepEqual(calls, [undefined]);
+    assert.equal(req.userId, user.id);
+    assert.notEqual(user.randomToken, previous);
+    const refresh = res.cookies.find(([name]) => name === 'refreshToken')[1];
+    assert.equal(refresh, user.randomToken);
+    assert.equal(jwt.verify(refresh, process.env.REFRESH_TOKEN_SECRET).email, user.email);
+  }
+});
+test('email-only mobile expiry requests refresh; missing refresh cookie rejects browser', async () => {
+  user.phone = null; user.email = 'email-user@example.com';
+  const mobile = request(true, true); let error;
+  await authMiddleware(mobile, response(), e => { error = e; });
+  assert.equal(error.code, 'Error_AccessTokenExpired');
+  const browser = request(false, true); delete browser.cookies.refreshToken;
+  await authMiddleware(browser, response(), e => { error = e; });
+  assert.equal(error.code, 'Error_Unauthenticated');
+});
 test('rejects mismatched access and refresh identities', async () => {
   const req = request(); req.cookies.accessToken = issueTokens({ id: 2, phone: 'other' }).accessToken;
   let error; await authMiddleware(req, response(), e => error = e);

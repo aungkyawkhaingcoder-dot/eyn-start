@@ -1,9 +1,22 @@
+import "dotenv/config";
 import jwt from "jsonwebtoken";
 import { randomUUID } from "node:crypto";
 import { createError } from "../utils";
 
-export const ACCESS_TOKEN_SECONDS = 15 * 60;
-export const REFRESH_TOKEN_SECONDS = 30 * 24 * 60 * 60;
+function readTokenSeconds(name: string, fallback: number): number {
+  const raw = process.env[name];
+  if (raw === undefined) return fallback;
+  const seconds = Number(raw);
+  // Keep JWT seconds and cookie milliseconds within a representable Date range.
+  if (!/^\d+$/.test(raw) || !Number.isSafeInteger(seconds) || seconds < 1 || seconds > 2147483647) {
+    throw new Error(`${name} must be an integer between 1 and 2147483647 (seconds)`);
+  }
+  return seconds;
+}
+
+// Loaded once per process; restart all workers after changing these values.
+export const ACCESS_TOKEN_SECONDS = readTokenSeconds("ACCESS_TOKEN_TTL_SECONDS", 15 * 60);
+export const REFRESH_TOKEN_SECONDS = readTokenSeconds("REFRESH_TOKEN_TTL_SECONDS", 30 * 24 * 60 * 60);
 export interface TokenPair { accessToken: string; refreshToken: string }
 export interface TokenUser { id: number; phone: string | null; email?: string | null }
 
