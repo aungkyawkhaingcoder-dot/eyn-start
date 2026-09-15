@@ -166,7 +166,7 @@ export const confirmPasswordHandler = async (
     return next(createError('This request may be and attack.', 400, "Error_OverLimit"));
   }
   // Require the token issued after successful OTP verification.
-  const isMatchToken = otpRow?.verifyToken === token;
+  const isMatchToken = typeof token === "string" && token.length > 0 && otpRow?.verifyToken === token;
   if (!isMatchToken) {
     return next(createError('Invalid token', 400, "Error_Invalid_Token"));
   }
@@ -183,6 +183,8 @@ export const confirmPasswordHandler = async (
 
   const userdata = {
     phone,
+    // Record verification only after the OTP proof and expiry checks above pass.
+    phoneVerifiedAt: new Date(),
     password: hashPassword.toString(),
     randomToken: tempRandomToken,
   };

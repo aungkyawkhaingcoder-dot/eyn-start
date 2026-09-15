@@ -1,0 +1,16 @@
+model EmailOtp {
+  id              Int       @id @default(autoincrement())
+  email           String    @unique @db.VarChar(70)
+  otp             String    @default("")
+  rememberToken   String?
+  verifyToken     String?
+  expiresAt       DateTime?
+  verifyExpiresAt DateTime?
+  verifiedAt      DateTime?
+  lastSentAt      DateTime?
+  quotaDay        String    @default("") @db.VarChar(10)
+  count           Int       @default(0)
+  error           Int       @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}

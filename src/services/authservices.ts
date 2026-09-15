@@ -6,6 +6,7 @@ import { Prisma } from "../generated/prisma/client";
 
 export const createUser = async (data: {
   phone: string;
+  phoneVerifiedAt?: Date;
   password: string;
   randomToken: string;
 }) => {

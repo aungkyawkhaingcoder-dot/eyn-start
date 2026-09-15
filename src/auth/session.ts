@@ -1,19 +1,19 @@
 import { getUserById, replaceRefreshToken, updateUser } from "../services/authservices";
-import { issueTokens, unauthenticated, verifyRefreshToken } from "./tokens";
+import { issueTokens, unauthenticated, verifyRefreshToken, matchesRefreshIdentity, TokenUser } from "./tokens";
 
 export async function authenticateRefreshToken(token: string | null) {
   if (!token) throw unauthenticated();
   const claims = verifyRefreshToken(token);
   const user = await getUserById(claims.id);
-  if (!user || user.randomToken !== token || user.phone !== claims.phone) {
+  if (!user || user.randomToken !== token || !matchesRefreshIdentity(user, claims)) {
     throw unauthenticated();
   }
   return user;
 }
 
-type SessionUser = { id: number; phone: string; randomToken: string };
+type SessionUser = TokenUser & { randomToken: string };
 
-export async function startSession(user: { id: number; phone: string }) {
+export async function startSession(user: TokenUser) {
   const tokens = issueTokens(user);
   await updateUser(user.id, { randomToken: tokens.refreshToken, errorLoginCount: 0 });
   return tokens;

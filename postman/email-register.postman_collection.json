@@ -1,0 +1,228 @@
+{
+  "info": {
+    "name": "email-register - import helper",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Email browser-cookie flow. Import then move email-register folder into demo-shop-template. Copy the email-prefixed variables to that collection. Set emailAddress, emailPassword (8 digits), and emailOtp from your inbox. Tokens are captured automatically after successful responses. Send manually in order; do not run all requests before entering the OTP. No real credentials included."
+  },
+  "variable": [
+    {
+      "key": "emailBaseUrl",
+      "value": "http://localhost:4000",
+      "type": "string"
+    },
+    {
+      "key": "emailAddress",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "emailPassword",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "emailOtp",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "emailRegisterToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "emailVerifyToken",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "email-register",
+      "description": "Browser cookie flow; no x-platform mobile header. Postman cookie jar must be enabled. Register also resends (60-second cooldown). OTP expires after 2 minutes. Confirm password automatically logs in. Logout revokes the current session.",
+      "item": [
+        {
+          "name": "01 - Register / Resend OTP",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{emailBaseUrl}}/api/v1/email/register",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{emailAddress}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) {",
+                  "  const data = pm.response.json();",
+                  "  pm.test(\"Response contains token\", () => pm.expect(data.token).to.be.a(\"string\").and.not.empty);",
+                  "  if (typeof data.token === \"string\") pm.collectionVariables.set(\"emailRegisterToken\", data.token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "02 - Verify OTP",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{emailBaseUrl}}/api/v1/email/verify-otp",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{emailAddress}}\",\n  \"otp\": \"{{emailOtp}}\",\n  \"token\": \"{{emailRegisterToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) {",
+                  "  const data = pm.response.json();",
+                  "  pm.test(\"Response contains verifyToken\", () => pm.expect(data.verifyToken).to.be.a(\"string\").and.not.empty);",
+                  "  if (typeof data.verifyToken === \"string\") pm.collectionVariables.set(\"emailVerifyToken\", data.verifyToken);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "03 - Confirm Password",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{emailBaseUrl}}/api/v1/email/confirm-password",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{emailAddress}}\",\n  \"password\": \"{{emailPassword}}\",\n  \"token\": \"{{emailVerifyToken}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "04 - Login",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{emailBaseUrl}}/api/v1/email/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{emailAddress}}\",\n  \"password\": \"{{emailPassword}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        },
+        {
+          "name": "05 - Logout",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [],
+            "url": "{{emailBaseUrl}}/api/v1/email/logout"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ],
+          "response": []
+        }
+      ]
+    }
+  ]
+}

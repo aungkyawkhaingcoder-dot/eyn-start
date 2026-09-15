@@ -1,7 +1,7 @@
-import { issueTokens, TokenPair, unauthenticated, verifyRefreshToken } from "../tokens";
+import { issueTokens, TokenPair, unauthenticated, verifyRefreshToken, matchesRefreshIdentity } from "../tokens";
 import { RefreshCodec } from "./crypto";
 
-export interface RefreshUser { id: number; phone: string; randomToken: string }
+export interface RefreshUser { id: number; phone: string | null; email?: string | null; randomToken: string }
 export interface RefreshRepository {
   getUserById(id: number): Promise<RefreshUser | null>;
   replaceRefreshToken(id: number, previous: string, replacement: string): Promise<boolean>;
@@ -34,7 +34,7 @@ export function createSharedRotation(
   async function findUser(token: string) {
     const claims = verifyRefreshToken(token);
     const user = await db.getUserById(claims.id);
-    if (!user || user.phone !== claims.phone) throw unauthenticated();
+    if (!user || !matchesRefreshIdentity(user, claims)) throw unauthenticated();
     return user;
   }
 
