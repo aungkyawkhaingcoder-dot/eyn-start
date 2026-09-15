@@ -80,3 +80,10 @@ JWT payloads are signed, not encrypted: access tokens contain `id`, `iat`, `exp`
 - Existing global IP limiter still applies. Its default in-memory store is per process; deploy a shared rate-limit store for cluster-wide IP enforcement. Per-email quotas/consumption are DB-backed.
 
 Tests run the real handlers, validators, JWTs and bcrypt with mocked Prisma/Resend. They cover full registration/login, shared refresh for email-only users, bad/expired/used OTPs, resend invalidation, confirmation replay, delivery failures and login restrictions. They do not establish production email delivery or PostgreSQL locking behavior. No real email was sent.
+
+## Explicit resend endpoints
+
+- POST `/api/v1/email/resend-otp`: `{ "email": "person@example.com" }`.
+- POST `/api/v1/resend-otp`: `{ "phone": "09912345678" }`.
+
+Both reuse their registration controller, validation and limits. They return a new `token` for the next verify-otp request; old request tokens and verification proofs are invalidated. An expired OTP is not required: email resend allows a request after its 60-second cooldown, within the daily quota. Expiry does not reset the quota. Phone retains its existing daily limits and development OTP 123456 (no real SMS delivery or new phone cooldown added). Because these routes reuse registration, they can also issue a first challenge and reject already-registered accounts.

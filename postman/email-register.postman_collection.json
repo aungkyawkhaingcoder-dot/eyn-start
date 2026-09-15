@@ -221,6 +221,48 @@
             }
           ],
           "response": []
+        },
+        {
+          "name": "Resend OTP (when needed)",
+          "request": {
+            "method": "POST",
+            "auth": {
+              "type": "noauth"
+            },
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{emailBaseUrl}}/api/v1/email/resend-otp",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{emailAddress}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) {",
+                  "  const data = pm.response.json();",
+                  "  pm.test(\"Response contains token\", () => pm.expect(data.token).to.be.a(\"string\").and.not.empty);",
+                  "  if (typeof data.token === \"string\") pm.collectionVariables.set(\"emailRegisterToken\", data.token);",
+                  "}"
+                ]
+              }
+            }
+          ],
+          "response": []
         }
       ]
     }

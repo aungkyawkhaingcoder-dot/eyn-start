@@ -58,6 +58,7 @@ export const registerUserHandler = async (
   const baseOtpData = {
     otp: hashedOtp,
     rememberToken: token,
+    verifyToken: null,
   };
 
   const otpRow = await getOtpByPhone(phone);
@@ -242,5 +243,4 @@ export const refreshTokenHandler = async (req: Request, res: Response): Promise<
   res.setHeader("Cache-Control", "no-store");
   res.status(200).json({ message: "SuccessFully Refreshed Token", ...tokens });
 };
-
 
