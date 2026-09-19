@@ -102,7 +102,8 @@ export async function recordEmailLoginFailure(id: number): Promise<void> {
   });
 }
 
-export async function startVerifiedEmailSession(user: TokenUser & { password: string }) {
+export async function startVerifiedEmailSession(user: TokenUser & { password: string | null }) {
+  if (!user.password) throw createError("Use your sign-in provider.", 401, "ERROR_INVALID");
   const tokens = issueTokens(user);
   // Recheck status and the password snapshot when committing the session.
   const result = await prisma.user.updateMany({ where: {

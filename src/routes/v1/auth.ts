@@ -1,10 +1,12 @@
 import emailAuthRouter from "./emailAuth";
+import googleAuthRouter from "./googleAuth";
 import express from 'express';
 import { registerUser, verifyOtp, confirmPassword, login, logout, refreshToken } from '../../controller/authController';
 
 const router = express.Router();
 
 router.use("/email", emailAuthRouter);
+router.use("/google", googleAuthRouter);
 
 router.post('/register', registerUser)
 // Reuse registration validation, OTP replacement and daily limits.

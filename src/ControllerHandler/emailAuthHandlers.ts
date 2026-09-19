@@ -70,6 +70,8 @@ export async function loginEmailHandler(req: Request, res: Response): Promise<vo
   }
   if (!user.emailVerifiedAt) throw createError("Verify your email first.", 403, "Error_EmailNotVerified");
 
+  // Provider-only users cannot authenticate here; do not freeze their Google login.
+  if (!user.password) throw createError("Email or password is incorrect.", 401, "ERROR_INVALID");
   if (!await bcrypt.compare(password, user.password)) {
     // Atomic increment avoids lost failures when requests arrive together.
     // Email login counts consecutive failures until success (not unrelated updatedAt writes).

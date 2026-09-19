@@ -210,6 +210,7 @@ export const loginHandler = async (
     return next(createError("Your account is temporarily locked. Please contact us.", 401, "ERROR_FREEZE"));
   }
 
+  if (!user.password) return next(createError("Password is wrong", 401, "ERROR_INVALID"));
   if (!await bcrypt.compare(password, user.password)) {
     const sameDay = isSameDay(user.updatedAt, new Date());
     const attempts = sameDay ? user.errorLoginCount + 1 : 1;
@@ -243,4 +244,3 @@ export const refreshTokenHandler = async (req: Request, res: Response): Promise<
   res.setHeader("Cache-Control", "no-store");
   res.status(200).json({ message: "SuccessFully Refreshed Token", ...tokens });
 };
-

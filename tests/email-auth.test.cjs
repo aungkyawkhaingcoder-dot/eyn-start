@@ -179,6 +179,17 @@ test('expired confirmation cannot create account', async () => {
   await assert.rejects(call('confirmEmailPasswordHandler', { email, token: verified.body.verifyToken, password: '12345678' }));
   assert.equal(users.length, 0);
 });
+test('password login rejects Google-only users without freezing their provider login', async () => {
+  users.push({ id: 1, phone: null, email, password: null, status: 'ACTIVE',
+    errorLoginCount: 0, emailVerifiedAt: new Date(), randomToken: 'google-session' });
+  for (let i = 0; i < 7; i++) {
+    await assert.rejects(call('loginEmailHandler', { email, password: '12345678' }), e => e.code === 'ERROR_INVALID');
+  }
+  assert.equal(users[0].status, 'ACTIVE');
+  assert.equal(users[0].errorLoginCount, 0);
+  assert.equal(users[0].randomToken, 'google-session');
+});
+
 test('login rejects unverified, wrong password and frozen accounts', async () => {
   users.push({ id: 1, phone: null, email, password: await bcrypt.hash('12345678', 4), status: 'ACTIVE', errorLoginCount: 0, emailVerifiedAt: null });
   await assert.rejects(call('loginEmailHandler', { email, password: '12345678' }), e => e.code === 'Error_EmailNotVerified');

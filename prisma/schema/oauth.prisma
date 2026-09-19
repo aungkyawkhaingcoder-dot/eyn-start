@@ -1,0 +1,22 @@
+model OAuthAccount {
+  id        Int      @id @default(autoincrement())
+  provider  String   @db.VarChar(20)
+  subject   String   @db.VarChar(255)
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([provider, subject])
+  @@unique([userId, provider])
+}
+
+model OAuthChallenge {
+  id         String    @id @db.VarChar(64)
+  nonceHash  String    @db.VarChar(64)
+  platform   String    @db.VarChar(10)
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([expiresAt])
+}
