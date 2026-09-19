@@ -19,15 +19,15 @@ export function createBullMQRefreshStrategy(
   const worker = new Worker("browser-refresh", async job => {
     const data = codec.open<{ token: string; deadline: number }>(job.data.payload);
     if (Date.now() >= data.deadline) throw refreshUnavailable();
-    await rotation.execute(data.token);
+    await rotation.execute(data.token, data.deadline);
     return { completed: true }; // Tokens are kept only in the encrypted TTL store.
   }, { ...options, connection: workerConnection, concurrency: 8 });
   queue.on("error", () => {});
   worker.on("error", () => {}); // Request path reports bounded 503; no secret-bearing logs.
 
-  async function refresh(token: string): Promise<void> {
+  async function refresh(token: string, requestDeadline = Infinity): Promise<void> {
     if ((await rotation.authenticate(token)).tokens) return;
-    const deadline = Date.now() + config.waitMs;
+    const deadline = Math.min(requestDeadline, Date.now() + config.waitMs);
     // Same old token => same job ID in every PM2 process. Never include raw JWTs.
     const job = await queue.add("rotate", {
       payload: codec.seal({ token, deadline }),
@@ -38,13 +38,15 @@ export function createBullMQRefreshStrategy(
     });
 
     // Poll job status across processes; B/C do not create their own rotation.
-    // Token availability is governed by the 3s TTL, not job retention time.
+    // Token availability is governed by the recovery TTL, not job retention time.
     while (Date.now() < deadline) {
       if ((await rotation.authenticate(token)).tokens) return;
       const state = await job.getState();
       if (state === "failed" || state === "unknown" || state === "completed") {
         // Final recheck covers a completion racing the preceding DB read.
         if ((await rotation.authenticate(token)).tokens) return;
+        // Let a later request enqueue a fresh job after an unsuccessful deadline.
+        if (state === "failed" || state === "completed") await job.remove().catch(() => {});
         throw refreshUnavailable();
       }
       await delay(40);

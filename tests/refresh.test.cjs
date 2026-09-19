@@ -81,3 +81,38 @@ test('different sessions rotate independently', async () => {
   assert.notEqual((await f.rotation.authenticate(a)).tokens.refreshToken,
     (await f.rotation.authenticate(b)).tokens.refreshToken);
 });
+
+test('slow commit and lost response recover beyond the former three-second window', async () => {
+  let now = Date.now(); const f = fixture({graceMs:120000, now:()=>now}); const token=session(f);
+  const replace=f.db.replaceRefreshToken;
+  f.db.replaceRefreshToken=async (...args)=>{const ok=await replace(...args);now+=20000;throw new Error('response lost after commit');};
+  await assert.rejects(f.rotation.execute(token),/response lost/);
+  now+=30000;
+  const recovered=await f.rotation.authenticate(token);
+  assert.equal(recovered.tokens.refreshToken,f.records.get(1).randomToken);
+  assert.equal(f.writes,1);
+  now+=70001;
+  await assert.rejects(f.rotation.authenticate(token),e=>e.status===401);
+});
+test('deadline passing during DB read prevents a late token commit', async () => {
+  let now=Date.now();const deadline=now+100;const f=fixture({graceMs:120000,now:()=>now});const token=session(f);
+  const get=f.db.getUserById;
+  f.db.getUserById=async id=>{const user=await get(id);now+=101;return user;};
+  await assert.rejects(f.rotation.execute(token,deadline),e=>e.code==='Error_RefreshUnavailable');
+  assert.equal(f.writes,0); assert.equal(f.records.get(1).randomToken,token);
+});
+test('recovery cannot restore a revoked session even during the longer window',async()=>{
+ const f=fixture({graceMs:120000});const token=session(f);await f.rotation.execute(token);
+ f.records.get(1).randomToken='logged-out';
+ await assert.rejects(f.rotation.authenticate(token),e=>e.status===401);
+});
+test('recovery refreshes an expired access token without another refresh rotation',async()=>{
+ const jwt=require('jsonwebtoken');const f=fixture({graceMs:120000});const token=session(f);
+ await f.rotation.execute(token);
+ const [key,entry]=[...f.entries][0];const candidate=f.codec.open(entry.value);
+ candidate.tokens.accessToken=jwt.sign({id:1},process.env.ACCESS_TOKEN_SECRET,{expiresIn:-1});
+ f.entries.set(key,{...entry,value:f.codec.seal(candidate)});
+ const result=await f.rotation.authenticate(token);
+ assert.equal(jwt.verify(result.tokens.accessToken,process.env.ACCESS_TOKEN_SECRET).id,1);
+ assert.equal(result.tokens.refreshToken,f.records.get(1).randomToken);assert.equal(f.writes,1);
+});

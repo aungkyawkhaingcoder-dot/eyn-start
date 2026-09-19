@@ -96,6 +96,25 @@ test('email register → verify → password → mobile login → refresh sessio
   await f.rotation.execute(login.body.refreshToken);
   assert.ok((await f.rotation.authenticate(login.body.refreshToken)).tokens);
 });
+test('email login returns tokens only with the explicit mobile application header', async () => {
+  users.push({id:1,phone:null,email,status:'ACTIVE',emailVerifiedAt:new Date(),
+    password:await bcrypt.hash('12345678',4),randomToken:'initial',errorLoginCount:0});
+  const {ACCESS_TOKEN_SECONDS}=require('../src/auth/tokens.ts');
+  for (const headers of [{}, {'user-agent':'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)'}, {'x-platform':'mobile'}]) {
+    const res=response();
+    await handlers.loginEmailHandler({body:{email,password:'12345678'},headers},res);
+    assert.equal(res.code,200); assert.equal(res.body.id,1);
+    if(headers['x-platform']==='mobile') {
+      assert.ok(res.body.accessToken); assert.ok(res.body.refreshToken);
+      assert.equal(res.body.expiresIn,ACCESS_TOKEN_SECONDS);
+      assert.equal(res.body.refreshToken,users[0].randomToken);
+      assert.deepEqual(res.cookies,{});
+    } else {
+      assert.ok(res.cookies.accessToken); assert.ok(res.cookies.refreshToken);
+      for(const field of ['accessToken','refreshToken','expiresIn']) assert.equal(field in res.body,false);
+    }
+  }
+});
 test('email logout revokes browser/mobile sessions and rejects replay and cached successors', async () => {
   const router = require('../src/routes/v1/emailAuth.ts').default;
   const logout = router.stack.find(layer => layer.route?.path === '/logout').route;

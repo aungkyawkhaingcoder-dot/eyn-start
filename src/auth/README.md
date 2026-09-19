@@ -86,8 +86,8 @@ If a worker commits the DB update and crashes before acknowledging the job, anot
 
 ### Limits and timing
 
-- Shared pair grace: **3 seconds from preparation**, never extended by reads. This intentionally permits a valid old refresh token to obtain its current successor during that window, including a stolen old token. It is a security/usability tradeoff, not strict replay rejection.
-- HTTP wait: **5 seconds**; Redis command/connect timeout: **1 second**; direct Redis lock: **6 seconds**. Source constants are in `config.ts`; keep clocks synchronized across hosts.
+- Shared pair grace: **120 seconds from preparation**, never extended by reads. This intentionally permits a valid old refresh token to obtain its current successor during that window, including a stolen old token. It is a security/usability tradeoff, not strict replay rejection.
+- HTTP wait: **15 seconds**; Redis command/connect timeout: **2 seconds**; direct Redis lock: **16 seconds**. Source constants are in `config.ts`; keep clocks synchronized across hosts.
 - Grace is enforced both by Redis TTL and the encrypted timestamp. DB delays consume grace. If Redis data is lost or grace elapses after DB commit but before the browser gets the result, reauthentication may still be necessary. There is no cross-database transaction between Redis and PostgreSQL.
 - A 503 `Error_RefreshUnavailable` means infrastructure/timeout, not automatically logout. Invalid/revoked sessions still return 401. A current valid session does not need a Redis command.
 - A timeout ends the HTTP wait; it cannot cancel an already-running DB command. A job that starts after its deadline refuses to rotate. A running operation can finish after the caller times out.
@@ -121,10 +121,18 @@ Implementation references: [Redis lock ownership](https://redis.io/docs/latest/d
 
 ## Mobile concurrency (iOS / Android)
 
-`POST /api/v1/refresh-token` continues to read `x-refresh-token` and return JSON `{ message, accessToken, refreshToken }`. It now calls `resolveMobileSession(token, true)`, sharing the same Redis/BullMQ coordinator as browsers. Concurrent requests using the same old refresh token receive the same pair within the 3-second grace. No cookies are set.
+`POST /api/v1/refresh-token` continues to read `x-refresh-token` and return JSON `{ message, accessToken, refreshToken }`. It now calls `resolveMobileSession(token, true)`, sharing the same Redis/BullMQ coordinator as browsers. Concurrent requests using the same old refresh token receive the same pair within the 120-second recovery window. No cookies are set.
 
 Protected requests still send `x-platform: mobile`, `Authorization: Bearer <accessToken>` and `x-refresh-token`. Middleware calls `resolveMobileSession(token, false)` (validation only). If the access token is missing/expired, or the refresh token has a recent committed successor, it returns `401 Error_AccessTokenExpired`. This lets an in-flight old request retrieve the successor instead of incorrectly logging out. Outside grace, or after revocation, old tokens are rejected.
 
 The mobile client should still share one refresh Promise, replace BOTH token headers on retries, and retry the original URL/method/payload at most once. Do not intercept the refresh endpoint itself. Backend coordination does not replay the original API or guarantee success under network failure. A 503 is temporary infrastructure failure, not proof the session was revoked. Old tokens cannot log out a successor session; use the newly stored refresh token for logout.
 
 `browserSession.ts` retains its filename for compatibility, but its runtime is shared by both clients. Function-based setup and AUTH_REFRESH_STRATEGY selection are unchanged. One refresh token per user remains a limitation: browser/phone or two-phone independent sessions require a per-device session model.
+
+## Idle connection and timeout recovery
+
+Redis connections are probed and reconnected once when a stale socket fails. Concurrent probes share one promise; no background keepalive is required. The request deadline is passed to Redis/BullMQ execution and checked immediately before beginning a DB commit. Already running DB writes cannot be cancelled by Promise.race. Their encrypted candidate remains available for a fixed 120 seconds from preparation so a retry can obtain the exact committed refresh token after checking current DB identity and session. Reads never extend this window; logout/login replacement still revokes recovery immediately. Expired cached access tokens are reissued only after those checks.
+
+This deliberately allows reuse of an old refresh token (including a stolen one) during that bounded window. It does not guarantee recovery after Redis data loss, an outage/sleep longer than the window during an in-flight commit, or indefinite DB stalls. Such cases can still require login. Redis/PostgreSQL do not share an atomic transaction.
+
+Logs prefixed [auth-refresh] report slow/failed DB reads, DB commits, Redis operations and request timeouts, without raw exceptions or token/credential values. Restart all PM2 workers together to apply this change. Existing already-stranded sessions require a fresh login. Tests include real runtime timeout-after-commit and reconnect regression cases with mocked I/O; integration tests use real Redis/BullMQ and an isolated fake user repository.

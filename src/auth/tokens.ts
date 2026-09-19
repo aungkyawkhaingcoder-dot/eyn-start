@@ -26,13 +26,17 @@ function secret(kind: "ACCESS" | "REFRESH"): string {
   return value;
 }
 
+export function issueAccessToken(user: Pick<TokenUser, "id">): string {
+  return jwt.sign({ id: user.id }, secret("ACCESS"), {
+    algorithm: "HS256", expiresIn: ACCESS_TOKEN_SECONDS,
+  });
+}
+
 export function issueTokens(user: TokenUser): TokenPair {
   const identity = user.phone ? { phone: user.phone } : { email: user.email };
   if (!user.phone && !user.email) throw unauthenticated();
   return {
-    accessToken: jwt.sign({ id: user.id }, secret("ACCESS"), {
-      algorithm: "HS256", expiresIn: ACCESS_TOKEN_SECONDS,
-    }),
+    accessToken: issueAccessToken(user),
     refreshToken: jwt.sign({ id: user.id, ...identity }, secret("REFRESH"), {
       algorithm: "HS256", expiresIn: REFRESH_TOKEN_SECONDS, jwtid: randomUUID(),
     }),

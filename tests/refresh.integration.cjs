@@ -80,9 +80,9 @@ for (const strategy of ['redis', 'bullmq']) {
       const late = await workers[2].request(cookies);
       assert.equal(late.status, 200);
       assert.equal(late.cookies.refreshToken, results[0].cookies.refreshToken);
-      // New token works directly; old token stops working after the fixed grace.
+      // A retry after the former 3-second grace still recovers the committed pair.
       await delay(3100);
-      assert.equal((await workers[0].request(cookies)).status, 401);
+      assert.equal((await workers[0].request(cookies)).status, 200);
       assert.equal((await workers[1].request(results[0].cookies)).status, 200);
       const fresh = await login(2);
       const freshResult = await workers[0].request(fresh);

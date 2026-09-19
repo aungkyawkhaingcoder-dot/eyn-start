@@ -18,5 +18,6 @@ export function readRefreshConfig(): RefreshConfig {
   }
   const prefix = process.env.AUTH_REFRESH_PREFIX ?? "prisma7-auth";
   if (!/^[a-zA-Z0-9_-]+$/.test(prefix)) throw new Error("Invalid AUTH_REFRESH_PREFIX");
-  return { strategy, redisUrl, prefix, graceMs: 3000, waitMs: 5000, lockMs: 6000 };
+  // Recovery survives a slow request and a later client retry; reads never extend it.
+  return { strategy, redisUrl, prefix, graceMs: 120000, waitMs: 15000, lockMs: 16000 };
 }

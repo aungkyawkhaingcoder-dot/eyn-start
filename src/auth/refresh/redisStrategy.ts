@@ -17,8 +17,8 @@ export function createRedisRefreshStrategy(
   codec: RefreshCodec,
   config: RefreshConfig,
 ) {
-  async function refresh(token: string): Promise<void> {
-    const deadline = Date.now() + config.waitMs;
+  async function refresh(token: string, requestDeadline = Infinity): Promise<void> {
+    const deadline = Math.min(requestDeadline, Date.now() + config.waitMs);
     const lockKey = `${config.prefix}:lock:${codec.id(token)}`;
     const owner = randomUUID();
     // အခြား request က refresh လုပ်ပြီးပြီဆို result ကို ပြန်သုံးမည်။
@@ -28,7 +28,7 @@ export function createRedisRefreshStrategy(
       // Lock ရတဲ့ request ကသာ rotation ကို စလုပ်မည်။
       if (acquired) {
         try {
-          await rotation.execute(token);
+          await rotation.execute(token, deadline);
           return;
         } finally {
           // Never delete a lock acquired by somebody else after our lease expired.

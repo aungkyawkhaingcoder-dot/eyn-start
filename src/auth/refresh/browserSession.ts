@@ -7,6 +7,20 @@ import { createRefreshCodec } from "./crypto";
 import { BrowserSession, createSharedRotation } from "./rotation";
 import { createRedisRefreshStrategy, refreshUnavailable } from "./redisStrategy";
 import { createBullMQRefreshStrategy } from "./bullmqStrategy";
+import { createRedisConnection } from "./connection";
+
+// Fixed labels only: never log errors containing URLs, credentials, JWTs or emails.
+async function measured<T>(stage: string, action: () => Promise<T>): Promise<T> {
+  const start = Date.now();
+  try {
+    const result = await action();
+    if (Date.now() - start >= 1000) console.warn("[auth-refresh]", { stage, outcome: "slow", elapsedMs: Date.now() - start });
+    return result;
+  } catch (error) {
+    console.warn("[auth-refresh]", { stage, outcome: "failed", elapsedMs: Date.now() - start });
+    throw error;
+  }
+}
 
 function createRuntime() {
   const config = readRefreshConfig();
@@ -15,27 +29,26 @@ function createRuntime() {
   const codec = createRefreshCodec(secret, config.prefix);
   const redis = new Redis(config.redisUrl, {
     lazyConnect: true, enableOfflineQueue: false, maxRetriesPerRequest: 1,
-    connectTimeout: 1000, commandTimeout: 1000, retryStrategy: () => null,
+    connectTimeout: 2000, commandTimeout: 2000, retryStrategy: () => null,
   });
   redis.on("error", () => {});
-  let connecting: Promise<void> | undefined;
-  async function ready() {
-    if (redis.status === "ready") return;
-    if (!connecting) connecting = redis.connect().finally(() => { connecting = undefined; });
-    await connecting;
-  }
-  const rotation = createSharedRotation({ getUserById, replaceRefreshToken }, {
+  const connection = createRedisConnection(redis);
+  const ready = () => measured("redis-connect", connection.ready);
+  const rotation = createSharedRotation({
+    getUserById: id => measured("db-session-read", () => getUserById(id)),
+    replaceRefreshToken: (id, old, replacement) => measured("db-token-commit", () => replaceRefreshToken(id, old, replacement)),
+  }, {
     async get(key) {
       await ready();
-      return redis.get(`${config.prefix}:${key}`);
+      return measured("redis-result-read", () => redis.get(`${config.prefix}:${key}`));
     },
     async putIfAbsent(key, value, ttl) {
       await ready();
-      return (await redis.set(`${config.prefix}:${key}`, value, "PX", ttl, "NX")) === "OK";
+      return (await measured("redis-result-write", () => redis.set(`${config.prefix}:${key}`, value, "PX", ttl, "NX"))) === "OK";
     },
   }, codec, config.graceMs);
   let strategy: {
-    refresh(token: string): Promise<void>;
+    refresh(token: string, deadline?: number): Promise<void>;
     close?(): Promise<void>;
   } | undefined;
   let workerRedis: Redis | undefined;
@@ -43,8 +56,9 @@ function createRuntime() {
   return {
     config,
     authenticate: (token: string) => rotation.authenticate(token),
-    async refresh(token: string) {
+    async refresh(token: string, deadline: number) {
       await ready();
+      if (Date.now() >= deadline) throw refreshUnavailable();
       if (!strategy) {
         if (config.strategy === "redis") {
           strategy = createRedisRefreshStrategy(redis, rotation, codec, config);
@@ -55,7 +69,7 @@ function createRuntime() {
           strategy = createBullMQRefreshStrategy(rotation, codec, config, redis, workerRedis);
         }
       }
-      await strategy.refresh(token);
+      await measured("rotation", () => strategy!.refresh(token, deadline));
       const result = await rotation.authenticate(token);
       if (!result.tokens) throw refreshUnavailable();
       return result;
@@ -76,15 +90,20 @@ export async function resolveBrowserSession(token: string | null, needsRefresh: 
   runtime ??= createRuntime();
   const currentRuntime = runtime;
   let timer: ReturnType<typeof setTimeout> | undefined;
+  const deadline = Date.now() + currentRuntime.config.waitMs;
   try {
     return await Promise.race([
       (async () => {
         const session = await currentRuntime.authenticate(token);
         if (session.tokens || !needsRefresh) return session;
-        return currentRuntime.refresh(token);
+        if (Date.now() >= deadline) throw refreshUnavailable();
+        return currentRuntime.refresh(token, deadline);
       })(),
       new Promise<never>((_, reject) => {
-        timer = setTimeout(() => reject(refreshUnavailable()), currentRuntime.config.waitMs);
+        timer = setTimeout(() => {
+          console.warn("[auth-refresh]", { stage: "request", outcome: "timeout", elapsedMs: currentRuntime.config.waitMs });
+          reject(refreshUnavailable());
+        }, currentRuntime.config.waitMs);
       }),
     ]);
   } catch (error) {

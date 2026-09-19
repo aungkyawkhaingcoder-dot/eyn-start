@@ -1,5 +1,6 @@
-import { issueTokens, TokenPair, unauthenticated, verifyRefreshToken, matchesRefreshIdentity } from "../tokens";
+import { issueTokens, issueAccessToken, verifyAccessToken, TokenPair, unauthenticated, verifyRefreshToken, matchesRefreshIdentity } from "../tokens";
 import { RefreshCodec } from "./crypto";
+import { refreshUnavailable } from "./redisStrategy";
 
 export interface RefreshUser { id: number; phone: string | null; email?: string | null; randomToken: string }
 export interface RefreshRepository {
@@ -47,13 +48,26 @@ export function createSharedRotation(
     const current = await findUser(token);
     if (!candidate || candidate.expiresAt <= now() ||
         current.randomToken !== candidate.tokens.refreshToken) throw unauthenticated();
-    return { user: current, tokens: candidate.tokens };
+    // A short access TTL may expire while the client is retrying. Keep the exact
+    // committed refresh token, but issue a usable access token after DB validation.
+    verifyRefreshToken(candidate.tokens.refreshToken);
+    let tokens = candidate.tokens;
+    try { verifyAccessToken(tokens.accessToken); } catch (error) {
+      if ((error as { code?: string }).code !== "Error_AccessTokenExpired") throw error;
+      tokens = { ...tokens, accessToken: issueAccessToken(current) };
+    }
+    return { user: current, tokens };
   }
 
-  async function execute(token: string): Promise<void> {
+  async function execute(token: string, deadline = Infinity): Promise<void> {
+    const checkDeadline = () => {
+      if (now() >= deadline) throw refreshUnavailable();
+    };
+    checkDeadline();
     let candidate = await readCandidate(token);
     if (!candidate) {
       const user = await findUser(token);
+      checkDeadline();
       if (user.randomToken !== token) throw unauthenticated();
       const prepared: Candidate = {
         tokens: issueTokens(user), expiresAt: now() + graceMs,
@@ -65,6 +79,9 @@ export function createSharedRotation(
 
     const user = await findUser(token);
     if (user.randomToken === token) {
+      // Do not start a write after the caller/worker deadline or near result expiry.
+      checkDeadline();
+      if (candidate.expiresAt - now() < 1000) throw refreshUnavailable();
       await db.replaceRefreshToken(user.id, token, candidate.tokens.refreshToken);
     }
     // A failed CAS might mean another worker committed this same candidate.
