@@ -1,5 +1,6 @@
 import { CookieOptions, Request, Response } from "express";
 import { ACCESS_TOKEN_SECONDS, REFRESH_TOKEN_SECONDS, TokenPair } from "./tokens";
+import { readServerConfig } from "../config/server";
 
 export const isMobile = (req: Pick<Request, "headers" | "cookies">) => req.headers["x-platform"] === "mobile";
 const tokenString = (value: unknown): string | null =>
@@ -21,8 +22,8 @@ export function readTokens(req: Pick<Request, "headers" | "cookies">) {
 export const readMobileRefreshToken = (req: Pick<Request, "headers" | "cookies">) => tokenString(req.headers["x-refresh-token"]);
 
 function cookieOptions(): CookieOptions {
-  const secure = process.env.NODE_ENV !== "development";
-  return { httpOnly: true, secure, sameSite: secure ? "none" : "lax", path: "/" };
+  const { secure, sameSite } = readServerConfig();
+  return { httpOnly: true, secure, sameSite, path: "/" };
 }
 
 export function setAuthCookies(res: Response, tokens: TokenPair): void {

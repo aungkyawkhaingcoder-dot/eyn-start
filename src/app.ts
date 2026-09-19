@@ -8,11 +8,12 @@ import authRouter from './routes/v1/auth';
 import userRouter from "./routes/admin/userRoute";
 import { authMiddleware } from "./middleware/auth";
 import cookieParser from "cookie-parser";
+import { readServerConfig } from "./config/server";
 const app: Express = express();
+const serverConfig = readServerConfig();
+app.set("trust proxy", serverConfig.trustProxy);
 
-const whitelist = [
-    "http://localhost:3000",
-    "http://localhost:3001", "http://localhost:5173"]
+const whitelist = serverConfig.origins;
 const corsOptions = {
     origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
         // allow requests with no origin (like mobile apps or curl requests)
@@ -23,7 +24,7 @@ const corsOptions = {
             callback(new Error("Not allowed by CORS"));
         }
     },
-    credentials: true, // Allow cookies authorization header 
+    credentials: true, // Allow cookies authorization header
 }
 app.use(morgan("combined"));
 app.use(express.urlencoded({ extended: true }));
@@ -33,6 +34,9 @@ app.use(cors(corsOptions));
 app.use(helmet());
 app.use(compression({}));
 app.use(limiter);
+
+// Liveness only: does not claim that PostgreSQL/Redis are ready.
+app.get("/healthz", (_req, res) => { res.status(200).json({ status: "ok" }); });
 
 // Routes
 app.use('/api/v1', authRouter)

@@ -6,10 +6,13 @@
   "type": "commonjs",
   "scripts": {
     "dev": "nodemon --watch src --ext ts --exec \"tsx src/index.ts\"",
-    "build": "pnpm prisma generate --no-engine && tsc --build",
+    "build": "pnpm prisma generate && tsc --build",
     "start": "node dist/index.js",
     "test": "node --require tsx/cjs --test tests/*.test.cjs",
-    "test:refresh:integration": "node --require tsx/cjs --test tests/refresh.integration.cjs"
+    "test:refresh:integration": "node --require tsx/cjs --test tests/refresh.integration.cjs",
+    "start:dev-server": "NODE_ENV=production APP_ENV=development node dist/index.js",
+    "start:production": "NODE_ENV=production APP_ENV=production node dist/index.js",
+    "db:deploy": "prisma migrate deploy"
   },
   "keywords": [],
   "author": "",
