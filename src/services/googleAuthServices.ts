@@ -32,7 +32,7 @@ export async function completeGoogleLogin(identity: GoogleIdentity, challengeId:
       if (!user) {
         // Never attach a provider to an existing user based solely on email.
         const existing = await tx.user.findFirst({ where: { email: { equals: identity.email, mode: "insensitive" } } });
-        if (existing) throw createError("Sign in with your existing method. Account linking is required.", 409, "Error_AccountLinkRequired");
+        if (existing) throw createError("This email address is already registered. Please sign in using your original login method.", 409, "Error_AccountLinkRequired");
         if (!identity.authoritativeEmail) {
           throw createError("Verify this email using email registration first.", 403, "Error_GoogleEmailVerificationRequired");
         }
