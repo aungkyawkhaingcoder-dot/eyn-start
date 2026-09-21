@@ -42,6 +42,8 @@ Product lists are currently unpaginated; introduce pagination before large catal
 
 ## Reading order
 
+Paths below are relative to `apps/api` in the workspace.
+
 1. `src/routes/v1/stores.ts` — endpoint and controller mapping.
 2. `src/controller/storeController.ts` — named handler entry points, following authController.
 3. `src/ControllerHandler/storeHandlers.ts` — request parameters, service calls, HTTP responses.
@@ -50,3 +52,27 @@ Product lists are currently unpaginated; introduce pagination before large catal
 
 `src/middleware/storeRequest.ts` holds private response cache headers and browser
 Origin/JSON checks. Public storefront also uses the controller and handler layers.
+
+## Google direct redirect login
+
+The HeroUI Google button POSTs `/api/v1/google/redirect/start` and navigates to
+Google's account chooser. Google returns to the backend GET
+`/api/v1/google/redirect/callback`. Browser-bound state, S256 PKCE, verified ID
+token nonce, and the existing single-use DB challenge protect this flow. The
+backend sets the existing session cookies and redirects to `/stores`. Cancellation
+and failure return to `/login` with a fixed error code, never provider tokens.
+Existing mobile `/google/challenge` and `/google/login` remain supported.
+
+Backend configuration (client secret must never be a NEXT_PUBLIC variable):
+
+```dotenv
+GOOGLE_WEB_CLIENT_SECRET=your-google-web-client-secret
+GOOGLE_REDIRECT_URI=http://localhost:8080/api/v1/google/redirect/callback
+GOOGLE_FRONTEND_ORIGIN=http://localhost:3000
+```
+
+Add the exact GOOGLE_REDIRECT_URI under your Web client's **Authorized redirect
+URIs** in Google Cloud Console, then restart the backend. Hosted deployments
+must use their own HTTPS URLs. Frontend origin must be in CORS_ORIGINS. Callback
+query strings are excluded from the app access logger because they contain
+short-lived authorization codes; configure hosting/proxy logs similarly.

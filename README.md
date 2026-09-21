@@ -1,146 +1,60 @@
-# Prisma-7
+# EYN workspace
 
-Node.js and TypeScript REST API built with Express, Prisma 7, and PostgreSQL.
-
-## Features
-
-- Express 5 API server
-- TypeScript source with compiled output in `dist/`
-- Prisma 7 client generated to `src/generated/prisma`
-- PostgreSQL support through `@prisma/adapter-pg`
-- Prisma Accelerate support for `prisma://` and `prisma+postgres://` URLs
-- User CRUD endpoints
-- Common API middleware: CORS, Helmet, compression, Morgan logging, JSON parsing, and rate limiting
-- Centralized Express error handler
-
-## Project Structure
+One pnpm workspace for the API, merchant application and reusable frontend packages.
+Use Node 24 and pnpm 10.2.1. The repository folder is still `prisma-7`.
 
 ```text
-prisma-7/
-|-- prisma/
-|   `-- schema.prisma          # Prisma datasource, generator, and models
-|-- src/
-|   |-- app.ts                 # Express app setup and middleware
-|   |-- index.ts               # Server entry point
-|   |-- generated/prisma/      # Generated Prisma client
-|   |-- lib/
-|   |   `-- prisma.ts          # Prisma client setup
-|   |-- middleware/
-|   |   |-- check.ts           # JWT auth middleware
-|   |   `-- raterLimiter.ts    # Rate limiting middleware
-|   `-- routes/
-|       `-- userRoutes.ts      # User CRUD routes
-|-- package.json
-|-- pnpm-lock.yaml
-|-- prisma.config.ts
-`-- tsconfig.json
+apps/api          Express, Prisma, authentication, store API and tests
+apps/merchant     Next.js merchant dashboard and /shop/[slug] storefront
+packages/auth     Shared auth forms, Google sign-in, hooks, Axios and types
+packages/ui       EYN theme, HeroUI styling and reusable Field component
+deploy            Separate online development/production environment templates
+docs              API and architecture documentation
 ```
 
-## Prerequisites
+## Local development
 
-- Node.js 18 or newer
-- pnpm
-- PostgreSQL database, or a Prisma Accelerate/Postgres connection URL
-
-## Environment Variables
-
-Create a `.env` file in the project root:
-
-```env
-PORT=4000
-DATABASE_URL="postgresql://username:password@localhost:5432/database_name?schema=public"
-JWT_SECRET="replace-with-a-secure-secret"
-```
-
-`DATABASE_URL` is required. The app supports regular PostgreSQL URLs and Prisma Accelerate URLs that start with `prisma://` or `prisma+postgres://`.
-
-## Installation
-
-```bash
-pnpm install
-```
-
-Generate the Prisma client:
-
-```bash
-pnpm prisma generate
-```
-
-If you need to create or update the database schema locally, run:
-
-```bash
-pnpm prisma migrate dev
-```
-
-## Development
-
-Start the development server:
-
-```bash
+```sh
+pnpm install --frozen-lockfile
+pnpm --filter @eyn/api exec prisma generate
 pnpm dev
 ```
 
-The server listens on `http://localhost:4000` by default, or the value configured in `PORT`.
+`pnpm dev` starts both apps. Use `pnpm dev:api` or `pnpm dev:merchant` to start
+one. Merchant runs at http://localhost:3000; API uses its `PORT` environment setting.
+PostgreSQL and Redis must be available separately.
 
-## Build and Run
+The existing backend `.env` now lives at **apps/api/.env**, beside its
+`.env.example`. Its values were preserved. Frontend overrides belong in
+**apps/merchant/.env.local** (see its `.env.example`). Never put secrets into
+`NEXT_PUBLIC_*` variables. Root `.env` is not loaded by the filtered app scripts.
 
-Build the project:
-
-```bash
+```sh
+pnpm test
+pnpm typecheck
 pnpm build
 ```
 
-Start the compiled server:
+Prisma commands run from the API package, e.g.
+`pnpm --filter @eyn/api exec prisma studio`. `pnpm db:deploy` applies migrations
+only when explicitly run; moving the project does not require a database reset.
 
-```bash
-pnpm start
-```
+## Shared code
 
-## Scripts
+Merchant imports `@eyn/auth` and `@eyn/ui` using `workspace:*`. Next transpiles
+their TypeScript source. There is no package publishing or separate package build.
+The auth hook accepts an `onSignedIn` callback, so a future CRM can choose its own
+destination instead of inheriting `/stores`. The API keeps token signing, secrets,
+OTP verification and database operations server-side.
 
-| Script | Description |
-| --- | --- |
-| `pnpm dev` | Start the development server with Nodemon |
-| `pnpm build` | Generate the Prisma client without the engine and compile TypeScript |
-| `pnpm start` | Run the compiled server from `dist/index.js` |
-| `pnpm test` | Placeholder test command |
+The UI package currently includes the existing EYN layout/auth/store styles as
+well as theme tokens. Import Tailwind, HeroUI styles, then `@eyn/ui/theme.css`;
+include the shared source directories in Tailwind scanning. See merchant's globals.css.
 
-## API Routes
+This migration preserves existing auth/store behavior and schema. Landing, CRM,
+payment/order workflows and legacy Product consolidation are separate follow-ups.
+The original Desktop `eyn-store` folder remains a backup; continue editing
+`apps/merchant` here. Stop old frontend/backend dev processes before running the
+new workspace so they do not compete for the same ports.
 
-All user routes are mounted under `/api/users`.
-
-| Method | Path | Description |
-| --- | --- | --- |
-| `GET` | `/api/users` | List all users |
-| `GET` | `/api/users/:id` | Get one user by ID |
-| `POST` | `/api/users` | Create a user |
-| `PUT` | `/api/users/:id` | Update a user |
-| `DELETE` | `/api/users/:id` | Delete a user |
-
-Example create request:
-
-```bash
-curl -X POST http://localhost:4000/api/users \
-  -H "Content-Type: application/json" \
-  -d "{\"email\":\"user@example.com\",\"name\":\"Example User\"}"
-```
-
-## Database Models
-
-The Prisma schema defines these models:
-
-- `User`: `id`, `email`, `name`, and related `posts`
-- `Post`: `id`, `title`, `content`, `published`, and `author`
-- `Shop`: `id`, `name`, and related `products`
-- `Product`: `id`, `name`, `price`, and related `shop`
-
-## Middleware
-
-- `src/middleware/raterLimiter.ts` limits each IP to 100 requests per 15 minutes.
-- `src/middleware/check.ts` verifies JWT bearer tokens and attaches `userId` to the request.
-
-Note: the current user CRUD routes are registered before the `check` middleware in `src/app.ts`, so they are publicly reachable unless the route registration order is changed.
-
-## License
-
-ISC
+See [deployment instructions](deploy/README.md) and [store API](docs/stores.md).

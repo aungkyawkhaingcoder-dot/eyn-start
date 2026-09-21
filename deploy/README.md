@@ -15,7 +15,7 @@ api.yourdomain.com. Domains, hosting and DNS have NOT been provisioned by this c
 Private Redis/DB endpoints must not be publicly exposed. Restrict the dev service to
 your team/testers using hosting access controls, VPN or a protected gateway.
 
-Copy development.env.example or production.env.example to .env ON THE CORRESPONDING
+Copy development.env.example or production.env.example to apps/api/.env ON THE CORRESPONDING
 SERVER, replacing every placeholder. Do not overwrite the existing local .env.
 Keep real env files out of Git and use distinct JWT secrets, Redis prefixes and Resend
 keys. A separate prefix is naming isolation, not a security boundary. Development
@@ -28,6 +28,7 @@ package.json. On dev first:
 
 ```sh
 pnpm install --frozen-lockfile
+pnpm --filter @eyn/api exec prisma generate
 pnpm test
 pnpm build
 pnpm db:deploy
@@ -41,6 +42,13 @@ production. Review existing migration history before first deploy; the commands
 above have not been executed against either hosted database by this setup.
 Use your hosting process manager or PM2 to keep the process running. Service-level
 resource sizing and deployment automation depend on the chosen host.
+
+Run the commands above from the workspace root. Backend build output is
+`apps/api/dist`; start scripts automatically use the API working directory.
+Merchant can be built independently with `pnpm --filter @eyn/merchant build`
+and started with `pnpm --filter @eyn/merchant start`. Include `packages/auth`
+and `packages/ui` in the frontend build checkout. Frontend environment values
+belong to the merchant service; backend secrets belong only to the API service.
 
 ## Browser and proxy configuration
 
