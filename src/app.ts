@@ -9,6 +9,8 @@ import userRouter from "./routes/admin/userRoute";
 import { authMiddleware } from "./middleware/auth";
 import cookieParser from "cookie-parser";
 import { readServerConfig } from "./config/server";
+import storeRouter from "./routes/v1/stores";
+import { getPublicStore } from "./controller/storeController";
 const app: Express = express();
 const serverConfig = readServerConfig();
 app.set("trust proxy", serverConfig.trustProxy);
@@ -39,6 +41,8 @@ app.use(limiter);
 app.get("/healthz", (_req, res) => { res.status(200).json({ status: "ok" }); });
 
 // Routes
+app.get('/api/v1/storefront/:slug', getPublicStore);
+app.use('/api/v1/stores', authMiddleware, storeRouter);
 app.use('/api/v1', authRouter)
 app.use('/api/v1/admin', authMiddleware, userRouter)
 
