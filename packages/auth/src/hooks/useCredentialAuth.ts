@@ -5,7 +5,7 @@ export function useCredentialAuth(
   provider: "email" | "phone",
   workbench: Workbench,
 ) {
-  const { auth, run, setNotice, busy, activeAction } = workbench;
+  const { auth, run, setNotice, busy, activeAction, isPending } = workbench;
   const [mode, setMode] = useState<Mode>("login");
   const [step, setStep] = useState(0);
   const [identity, setIdentity] = useState("");
@@ -99,8 +99,8 @@ export function useCredentialAuth(
     setPassword,
     wait,
     busy,
-    submitting: activeAction === "credentials",
-    resending: activeAction === "resend",
+    submitting: isPending && activeAction === "credentials",
+    resending: isPending && activeAction === "resend",
     reset,
     submit,
     run,

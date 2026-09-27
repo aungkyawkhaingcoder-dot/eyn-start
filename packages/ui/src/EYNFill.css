@@ -1,0 +1,17 @@
+.eyn-auth-transition { position: fixed; inset: 0; z-index: 10000; display: grid; place-items: center; background: var(--canvas, #f5f4f0); color: var(--ink, #080808); cursor: progress; touch-action: none; outline: none; }
+
+.eyn-fill { display:block; overflow:visible; }
+.eyn-fill__sweep { animation-duration:1000ms; animation-timing-function:cubic-bezier(.4,0,.2,1); animation-fill-mode:both; }
+.eyn-fill__sweep--top { animation-name:eyn-color-fill-top; }
+.eyn-fill__sweep--bottom { animation-name:eyn-color-fill-bottom; }
+/* Top: reveal begins at the left tip and travels right. */
+@keyframes eyn-color-fill-top {
+  from { x:179.53px; width:0; }
+  to { x:179.53px; width:967.2px; }
+}
+/* Bottom: reveal begins at the right tip and travels left. */
+@keyframes eyn-color-fill-bottom {
+  from { x:1023.56px; width:0; }
+  to { x:142.5px; width:881.06px; }
+}
+@media (prefers-reduced-motion:reduce) { .eyn-fill__sweep { animation:none; transform:none; } }

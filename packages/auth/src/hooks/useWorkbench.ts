@@ -1,6 +1,6 @@
 import toast from "react-hot-toast";
 import { clearCache } from "ahooks";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRequest } from "ahooks";
 import { createAuthApi } from "../services/authApi";
 import { useRequestHistory } from "./useRequestHistory";
@@ -11,11 +11,17 @@ export function useWorkbench(onSignedIn: () => void) {
   const [notice, setNotice] = useState<Notice>(null);
   const [session, setSession] = useState<Session>(null);
   const running = useRef(false);
-  const [activeAction, setActiveAction] = useState<"credentials" | "resend" | "google" | null>(null);
+  const [isPending, startTransition] = useTransition();
+  const [activeAction, setActiveAction] = useState<
+    "credentials" | "resend" | "google" | null
+  >(null);
   useEffect(() => {
     // A back/forward-cache return must not retain the Google redirect spinner.
     const restore = (event: PageTransitionEvent) => {
-      if (event.persisted) { running.current = false; setActiveAction(null); }
+      if (event.persisted) {
+        running.current = false;
+        setActiveAction(null);
+      }
     };
     window.addEventListener("pageshow", restore);
     return () => window.removeEventListener("pageshow", restore);
@@ -32,27 +38,33 @@ export function useWorkbench(onSignedIn: () => void) {
       },
     },
   );
-  async function run(operation: () => Promise<unknown>, source: "credentials" | "resend" | "google" = "credentials", keepPending = false) {
-    if (running.current) return;
+  function run(
+    operation: () => Promise<unknown>,
+    source: "credentials" | "resend" | "google" = "credentials",
+    keepPending = false,
+  ) {
+    if (running.current || isPending) return;
     running.current = true;
     setActiveAction(source);
-    let completed = false;
-    try {
-      await action.runAsync(operation);
-      completed = true;
-    } catch {
-      /* useRequest.onError owns the visible error. */
-    } finally {
-      if (!completed || !keepPending) {
-        running.current = false;
-        setActiveAction(null);
+    startTransition(async () => {
+      let completed = false;
+      try {
+        await action.runAsync(operation);
+        completed = true;
+      } catch {
+        /* useRequest.onError owns the visible error. */
+      } finally {
+        if (!completed || !keepPending) {
+          running.current = false;
+          startTransition(() => setActiveAction(null));
+        }
       }
-    }
+    });
   }
   function signedIn(data: ApiData) {
     clearCache();
     toast.success("Welcome to EYN");
-    onSignedIn();
+    startTransition(() => onSignedIn());
     setSession({
       id: data.id ?? data.userId,
       at: new Date().toLocaleTimeString(),
@@ -69,7 +81,8 @@ export function useWorkbench(onSignedIn: () => void) {
     signedIn,
     run,
     activeAction,
-    busy: activeAction !== null,
+    isPending,
+    busy: isPending || activeAction !== null,
   };
 }
 export type Workbench = ReturnType<typeof useWorkbench>;

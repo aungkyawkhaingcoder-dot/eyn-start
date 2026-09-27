@@ -11,7 +11,6 @@ export function GoogleSignIn({ workbench }: { workbench: Workbench }) {
         {busy ? <Spinner size="sm" color="current" /> : <GoogleIcon />}
         <span>{busy ? "Opening Google" : "Continue with Google"}</span>
       </Button>
-      <p className="social-caption">Sign in or create your EYN account.</p>
     </div>
   );
 }

@@ -1,4 +1,5 @@
 @theme {
+  --radius-lg: 8px;
   --font-sans: Arial, Helvetica, sans-serif;
 }
 
@@ -952,7 +953,8 @@ td {
   width: 100%;
   box-shadow: none;
   border: 0;
-  padding: 28px;
+  padding: 32px;
+  border-radius: 20px;
   gap: 0;
 }
 .card-heading {
@@ -1403,9 +1405,13 @@ small {
   }
 }
 
-/* EYN buttons use a consistent 4px radius across HeroUI variants and link buttons. */
+/* Match Tailwind rounded-lg across HeroUI, native and link buttons. */
+button:not([role="tab"]),
 .button {
-  border-radius: 0.25rem;
+  border-radius: var(--radius-lg);
+}
+.mode .button {
+  border-radius: 0;
 }
 
 /* Pending indicators must contrast with the button, including danger buttons. */
@@ -1413,7 +1419,7 @@ small {
   color: inherit;
 }
 
-/* Compact social sign-in: preserve the EYN layout and 4px button radius. */
+/* Compact social sign-in: preserve the EYN layout and 8px button radius. */
 .google-panel {
   padding: 28px 0 8px;
 }
@@ -1542,3 +1548,45 @@ em, i {
 body, button, input, textarea, select {
   font-family: var(--font-sans);
 }
+
+/* Provider choices stay compact and align with the credential form below. */
+.auth-provider-tabs .tabs__list {
+  width: fit-content;
+  max-width: 100%;
+  justify-content: flex-start;
+  align-self: flex-start;
+  gap: 20px;
+  padding-inline: 0;
+  margin-inline: 0;
+}
+.auth-provider-tabs .tabs__tab {
+  flex: 0 0 auto;
+  width: auto;
+  min-width: 0;
+  padding-inline: 0;
+  border-radius: 0;
+}
+.auth-provider-tabs .tabs__panel {
+  padding-inline: 0;
+}
+
+/* A compact account card: header, method, credentials, then social sign-in. */
+.auth-card .card-heading { margin-bottom: 24px; }
+.auth-card .card-heading h2 { margin: 0; font-size: 26px; letter-spacing: -0.6px; }
+.auth-intro { margin: 8px 0 0; font-size: 14px; line-height: 1.6; color: var(--muted); }
+.auth-card .auth-provider-tabs { gap: 0; }
+.auth-card .auth-provider-tabs .tabs__list { gap: 24px; margin: 0; }
+.auth-card .auth-provider-tabs .tabs__tab { min-height: 36px; padding-block: 6px; }
+.auth-card .auth-provider-tabs .tabs__panel { padding: 0; margin: 0; }
+.auth-card .mode { gap: 24px; margin: 24px 0 20px; }
+.auth-card fieldset { display: grid; gap: 20px; min-width: 0; margin: 0; padding: 0; border: 0; }
+.auth-card .text-field { gap: 8px; }
+.auth-card .input { min-height: 46px; }
+.auth-card .primary { margin-top: 4px; }
+.auth-card .auth-divider { margin-top: 24px; font-size: 12px; }
+.auth-card .auth-divider + .google-panel { padding: 16px 0 0; }
+@media (max-width: 600px) {
+  .auth-card { padding: 24px 20px; border-radius: 16px; }
+  .auth-card .card-heading h2 { font-size: 24px; }
+}
+

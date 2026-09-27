@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { EynLoader } from "@eyn/ui/EynLoader";
 import {
   Eye,
   EyeOff,
@@ -38,6 +39,7 @@ export function CredentialForm({
   } = useCredentialAuth(provider, workbench);
   return (
     <>
+      {submitting && mode === "login" && <EynLoader label="Signing in" />}
       <div className="mode">
         <Button
           isDisabled={busy}
@@ -144,7 +146,7 @@ export function CredentialForm({
                   )}
                 </Button>
               </div>
-              <small>Use an 8-digit numeric password.</small>
+              {mode === "register" && <small>Use an 8-digit numeric password.</small>}
             </TextField>
           )}
           <Button className="primary" type="submit" isDisabled={busy} isPending={submitting}>

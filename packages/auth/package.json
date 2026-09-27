@@ -21,5 +21,8 @@
     "axios": "^1.0.0",
     "lucide-react": "^0.577.0",
     "react-hot-toast": "^2.6.0"
+  },
+  "dependencies": {
+    "@eyn/ui": "workspace:*"
   }
 }

@@ -4,13 +4,16 @@
   "private": true,
   "exports": {
     "./theme.css": "./theme.css",
-    "./Field": "./src/Field.tsx"
+    "./Field": "./src/Field.tsx",
+    "./EynLoader": "./src/EynLoader.tsx"
   },
   "devDependencies": {
-    "@types/react": "^19.0.0"
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0"
   },
   "peerDependencies": {
     "react": "^19.2.0",
-    "@heroui/react": "^3.0.0"
+    "@heroui/react": "^3.0.0",
+    "react-dom": "^19.2.0"
   }
 }

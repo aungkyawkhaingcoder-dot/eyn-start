@@ -29,7 +29,7 @@ stays on the backend. Existing email/phone OTP limits still apply.
 - Public `/shop/[slug]` catalog showing only published stores/products.
 - Light/dark EYN palette, supplied transparent logos, responsive navigation.
 - HeroUI Button (`isPending` + Spinner), Card, Chip, Switch, Tabs, TextField,
-  Input, TextArea, Label and FieldError. Buttons use 0.25rem radius.
+  Input, TextArea, Label and FieldError. Buttons use 8px radius (Tailwind rounded-lg).
 - Zustand persists theme only, sidebar is transient. No auth tokens in storage.
 - useRequest caches reads by user/store; mutations clear cache and refresh data.
   Logout/login clear caches. Axios sends HttpOnly cookies without mobile headers.

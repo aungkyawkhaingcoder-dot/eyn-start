@@ -4,6 +4,7 @@ import { useUiStore } from "../stores/useUiStore";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import { Button, Spinner } from "@heroui/react";
+import { EynLoader } from "@eyn/ui/EynLoader";
 import { useRequest, clearCache } from "ahooks";
 import {
   ShieldCheck,
@@ -21,7 +22,7 @@ import {
 import { Brand } from "./Brand";
 import { Loading, Failure } from "./Feedback";
 import { storeApi } from "../services/storeApi";
-import { useSaveAction } from "../hooks/useStores";
+import { useLogout } from "../hooks/useLogout";
 export function Shell({
   children,
   storeId,
@@ -55,7 +56,7 @@ export function Shell({
       }
     },
   });
-  const logout = useSaveAction();
+  const logout = useLogout();
 
   const base = storeId ? `/stores/${storeId}` : "/stores";
   const nav = [
@@ -70,6 +71,7 @@ export function Shell({
   ];
   return (
     <div className="app-shell">
+      {logout.isPending && <EynLoader label="Signing out" />}
       <aside
         id="workspace-navigation"
         className={`sidebar ${open ? "open" : ""}`}
@@ -117,14 +119,11 @@ export function Shell({
             isIconOnly
             variant="ghost"
             aria-label="Sign out"
-            isPending={logout.loading}
-            onPress={() =>
-              logout.save(storeApi.logout, "Signed out", () =>
-                router.replace("/login"),
-              )
-            }
+            isPending={logout.isPending}
+            isDisabled={logout.isPending}
+            onPress={logout.logout}
           >
-            {logout.loading ? <Spinner size="sm" /> : <LogOut size={17} />}
+            {logout.isPending ? <Spinner size="sm" /> : <LogOut size={17} />}
           </Button>
         </div>
       </aside>
