@@ -9,11 +9,8 @@ if (!connectionString) {
   throw new Error("DATABASE_URL is not set");
 }
 
-const prismaClient =
-  connectionString.startsWith("prisma://") || connectionString.startsWith("prisma+postgres://")
-    ? new PrismaClient({ accelerateUrl: connectionString })
-    : new PrismaClient({ adapter: new PrismaPg({ connectionString }) });
+const prismaClient = new PrismaClient({ adapter: new PrismaPg({ connectionString }) });
 
-const prisma = prismaClient.$extends(withAccelerate());
+const prisma = prismaClient
 
 export { prisma };
