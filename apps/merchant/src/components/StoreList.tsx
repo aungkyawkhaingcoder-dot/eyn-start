@@ -12,8 +12,8 @@ import {
 } from "lucide-react";
 import { useStores } from "../hooks/useStores";
 import { Loading, Failure } from "./Feedback";
-export function StoreList({ userId }: { userId: number }) {
-  const stores = useStores(userId);
+export function StoreList({ cacheScope }: { cacheScope: string }) {
+  const stores = useStores(cacheScope);
   if (stores.loading && !stores.data) return <Loading />;
   if (stores.error)
     return <Failure error={stores.error} retry={stores.refresh} />;

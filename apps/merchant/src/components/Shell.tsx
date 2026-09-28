@@ -1,11 +1,11 @@
 "use client";
 import { useEffect } from "react";
 import { useUiStore } from "../stores/useUiStore";
-import { useRouter, usePathname } from "next/navigation";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { Button, Spinner } from "@heroui/react";
 import { EynLoader } from "@eyn/ui/EynLoader";
-import { useRequest, clearCache } from "ahooks";
+import { useMerchantCacheScope } from "./MerchantCache";
 import {
   ShieldCheck,
   LayoutDashboard,
@@ -21,18 +21,15 @@ import {
   X,
 } from "lucide-react";
 import { Brand } from "./Brand";
-import { Loading, Failure } from "./Feedback";
-import { storeApi } from "../services/storeApi";
 import { useLogout } from "../hooks/useLogout";
 export function Shell({
   children,
   storeId,
 }: {
-  children: (userId: number) => React.ReactNode;
+  children: (cacheScope: string) => React.ReactNode;
   storeId?: number;
 }) {
-  const router = useRouter(),
-    path = usePathname();
+  const path = usePathname();
   const {
     theme,
     sidebarOpen: open,
@@ -49,14 +46,7 @@ export function Shell({
     return () => document.removeEventListener("keydown", escape);
   }, [open, closeSidebar]);
   const dark = theme === "dark";
-  const session = useRequest(storeApi.me, {
-    onError: (e: Error & { status?: number }) => {
-      if (e.status === 401) {
-        clearCache();
-        router.replace("/login");
-      }
-    },
-  });
+  const cacheScope = useMerchantCacheScope();
   const logout = useLogout();
 
   const base = storeId ? `/stores/${storeId}` : "/stores";
@@ -112,9 +102,7 @@ export function Shell({
           <div>
             EYN workspace
             <small>
-              {session.data
-                ? `Account #${session.data.currentUserId}`
-                : "Merchant account"}
+              Merchant account
             </small>
           </div>
           <Button
@@ -175,13 +163,7 @@ export function Shell({
           </div>
         </header>
         <main className="content">
-          {session.loading ? (
-            <Loading />
-          ) : session.error ? (
-            <Failure error={session.error} retry={session.refresh} />
-          ) : session.data ? (
-            children(session.data.currentUserId)
-          ) : null}
+          {children(cacheScope)}
         </main>
         <footer>
           EYN <span>Everything you need. For everything you’re building.</span>

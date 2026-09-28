@@ -6,11 +6,11 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params);
   return (
     <Shell storeId={Number(id)}>
-      {(userId) => (
+      {(cacheScope) => (
         <StoreWorkspace
           key={id}
           id={Number(id)}
-          userId={userId}
+          cacheScope={cacheScope}
           view="overview"
         />
       )}

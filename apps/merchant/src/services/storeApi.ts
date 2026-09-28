@@ -17,8 +17,6 @@ export const storeApi = {
   orderStatus: async (storeId: number, id: number, status: string) =>
     (await api.patch(`/api/v1/stores/${storeId}/orders/${id}`, { status }))
       .data,
-  me: async () =>
-    (await api.get<{ currentUserId: number }>("/api/v1/admin/user")).data,
   list: async () => (await api.get<Store[]>("/api/v1/stores")).data,
   get: async (id: number) =>
     (await api.get<Store>(`/api/v1/stores/${id}`)).data,

@@ -21,15 +21,15 @@ import { Loading, Failure } from "./Feedback";
 import type { Product, ProductDraft, Store } from "../types/store";
 export function StoreWorkspace({
   id,
-  userId,
+  cacheScope,
   view,
 }: {
   id: number;
-  userId: number;
+  cacheScope: string;
   view: "overview" | "products" | "settings";
 }) {
-  const store = useStore(id, userId);
-  const products = useProducts(id, userId);
+  const store = useStore(id, cacheScope);
+  const products = useProducts(id, cacheScope);
   if ((store.loading && !store.data) || (products.loading && !products.data))
     return <Loading />;
   if (store.error) return <Failure error={store.error} retry={store.refresh} />;

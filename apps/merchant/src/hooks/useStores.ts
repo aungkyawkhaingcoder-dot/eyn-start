@@ -3,24 +3,24 @@ import { useRequest, clearCache } from "ahooks";
 import { useRef } from "react";
 import toast from "react-hot-toast";
 import { storeApi } from "../services/storeApi";
-export function useStores(userId: number) {
+export function useStores(cacheScope: string) {
   return useRequest(storeApi.list, {
-    cacheKey: `stores:${userId}`,
+    cacheKey: `merchant-stores:${cacheScope}`,
     staleTime: 15000,
     cacheTime: 60000,
   });
 }
-export function useStore(id: number, userId: number) {
+export function useStore(id: number, cacheScope: string) {
   return useRequest(() => storeApi.get(id), {
-    cacheKey: `store:${userId}:${id}`,
+    cacheKey: `merchant-store:${cacheScope}:${id}`,
     refreshDeps: [id],
     staleTime: 15000,
     cacheTime: 60000,
   });
 }
-export function useProducts(id: number, userId: number) {
+export function useProducts(id: number, cacheScope: string) {
   return useRequest(() => storeApi.products(id), {
-    cacheKey: `products:${userId}:${id}`,
+    cacheKey: `merchant-products:${cacheScope}:${id}`,
     refreshDeps: [id],
     staleTime: 15000,
     cacheTime: 60000,
