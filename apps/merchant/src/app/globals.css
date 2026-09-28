@@ -3,3 +3,8 @@
 @import "@eyn/ui/theme.css";
 @source "../../../../packages/auth/src";
 @source "../../../../packages/ui/src";
+
+.merchant-orders { display: grid; gap: 20px; }
+.merchant-order { padding: 24px; overflow-wrap: anywhere; }
+.merchant-order h2 { font-size: 18px; }
+.merchant-order ul { display: grid; gap: 8px; margin: 16px 0; }

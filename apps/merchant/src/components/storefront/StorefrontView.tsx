@@ -1,0 +1,312 @@
+"use client";
+import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import { Button } from "@heroui/react";
+import { Search, X, ShoppingBag } from "lucide-react";
+import type { Product, Storefront } from "../../types/store";
+import { CartProvider, money } from "./CartProvider";
+import { CartPanel } from "./CartPanel";
+import { ProductCard, ProductImage, AddToCart } from "./ProductCard";
+import "./storefront.css";
+
+function Collection({
+  title,
+  subtitle,
+  products,
+  currency,
+  open,
+}: {
+  title: string;
+  subtitle: string;
+  products: Product[];
+  currency: string;
+  open: (p: Product) => void;
+}) {
+  if (!products.length) return null;
+  return (
+    <section className="sf-section">
+      <div className="sf-section-title">
+        <div>
+          <span className="sf-overline">{subtitle}</span>
+          <h2>{title}</h2>
+        </div>
+        <span>{products.length} pieces</span>
+      </div>
+      <div className="sf-grid">
+        {products.map((p) => (
+          <ProductCard key={p.id} product={p} currency={currency} open={open} />
+        ))}
+      </div>
+    </section>
+  );
+}
+function ProductDetail({
+  product,
+  currency,
+  close,
+}: {
+  product: Product;
+  currency: string;
+  close: () => void;
+}) {
+  const dialog = useRef<HTMLDialogElement>(null);
+  useEffect(() => {
+    dialog.current?.showModal();
+  }, []);
+  return (
+    <dialog
+      ref={dialog}
+      className="sf-dialog sf-product-dialog"
+      onClose={close}
+    >
+      <div className="sf-dialog-heading">
+        <span>Product details</span>
+        <Button
+          isIconOnly
+          variant="ghost"
+          aria-label="Close product details"
+          onPress={close}
+        >
+          <X size={20} />
+        </Button>
+      </div>
+      <div className="sf-detail-layout">
+        <div className="sf-product-image">
+          <ProductImage product={product} />
+        </div>
+        <div>
+          <span className="sf-overline">
+            {product.category?.name || "The collection"}
+          </span>
+          <h2>{product.name}</h2>
+          <strong>{money(product.price, currency)}</strong>
+          <p className="sf-description">
+            {product.description ||
+              "A carefully selected addition to our collection."}
+          </p>
+          <p>
+            {product.inventory
+              ? `${product.inventory} available`
+              : "Currently sold out"}
+          </p>
+          <AddToCart product={product} />
+        </div>
+      </div>
+    </dialog>
+  );
+}
+export function StorefrontView({ store }: { store: Storefront }) {
+  const [query, setQuery] = useState(""),
+    [category, setCategory] = useState(""),
+    [selected, select] = useState<Product | null>(null);
+  const categories = [
+    ...new Set(
+      store.products
+        .map((p) => p.category?.name)
+        .filter((name): name is string => !!name),
+    ),
+  ];
+  const filtered = store.products.filter(
+    (p) =>
+      (!category || p.category?.name === category) &&
+      `${p.name} ${p.description} ${(p.taggables || []).map((t) => t.tag.name).join(" ")}`
+        .toLowerCase()
+        .includes(query.toLowerCase()),
+  );
+  const best = (store.bestSellerIds || []).flatMap((id) =>
+    store.products.filter((p) => p.id === id),
+  );
+  const featured = store.products.filter((p) =>
+    p.taggables?.some((t) => t.tag.name === "featured"),
+  );
+  return (
+    <CartProvider store={store}>
+      <div className="sf" data-store-theme={store.theme || "eyn-light"}>
+        <div className="sf-announcement">
+          A little discovery. Something you’ll love.
+        </div>
+        <header className="sf-header">
+          <Link className="sf-store-brand" href={`/shop/${store.slug}`}>
+            {store.logoUrl ? (
+              <img
+                src={store.logoUrl}
+                alt={store.name}
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <span className="sf-monogram">{store.name.slice(0, 1)}</span>
+            )}
+            <span>{store.name}</span>
+          </Link>
+          <nav aria-label="Store navigation">
+            <a href="#collection">Shop the collection</a>
+          </nav>
+          <CartPanel store={store} />
+        </header>
+        <main className="sf-main">
+          <section
+            className={`sf-hero ${store.coverUrl ? "sf-hero-image" : ""}`}
+          >
+            <div className="sf-hero-copy">
+              <span className="sf-overline">
+                WELCOME TO {store.name.toUpperCase()}
+              </span>
+              <h1>
+                Good finds.
+                <br />
+                <span>Made for you.</span>
+              </h1>
+              <p>
+                {store.description ||
+                  "Discover our collection. Find your next everyday favourite."}
+              </p>
+              <a className="sf-shop-link" href="#collection">
+                Explore the collection
+              </a>
+            </div>
+            {store.coverUrl ? (
+              <img
+                className="sf-cover"
+                src={store.coverUrl}
+                alt={`${store.name} collection`}
+                referrerPolicy="no-referrer"
+              />
+            ) : (
+              <div className="sf-hero-art" aria-hidden="true">
+                <div />
+                <div />
+                <span>{store.name.slice(0, 1)}</span>
+              </div>
+            )}
+          </section>
+          <div className="sf-promises">
+            <span>
+              <ShoppingBag size={18} />
+              Shop directly with {store.name}
+            </span>
+            <span>Thoughtfully selected</span>
+            <span>Your next favourite awaits</span>
+          </div>
+          <Collection
+            title="Loved by our customers"
+            subtitle="BEST SELLERS"
+            products={best}
+            currency={store.currency}
+            open={select}
+          />
+          <Collection
+            title="The store’s picks"
+            subtitle="HANDPICKED FOR YOU"
+            products={featured}
+            currency={store.currency}
+            open={select}
+          />
+          <section id="collection" className="sf-section">
+            <div className="sf-section-title">
+              <div>
+                <span className="sf-overline">FIND YOUR FAVOURITES</span>
+                <h2>The collection</h2>
+              </div>
+              <span>{filtered.length} products</span>
+            </div>
+            <div className="sf-filters">
+              <label className="sf-search">
+                <Search size={18} />
+                <input
+                  type="search"
+                  aria-label="Search products"
+                  placeholder="Search the collection"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                />
+              </label>
+              <div className="sf-categories" aria-label="Product categories">
+                <Button
+                  variant={category === "" ? "primary" : "ghost"}
+                  onPress={() => setCategory("")}
+                  aria-pressed={category === ""}
+                >
+                  All products
+                </Button>
+                {categories.map((name) => (
+                  <Button
+                    key={name}
+                    variant={category === name ? "primary" : "ghost"}
+                    onPress={() => setCategory(name)}
+                    aria-pressed={category === name}
+                  >
+                    {name}
+                  </Button>
+                ))}
+              </div>
+            </div>
+            <div className="sf-grid">
+              {filtered.map((p) => (
+                <ProductCard
+                  key={p.id}
+                  product={p}
+                  currency={store.currency}
+                  open={select}
+                />
+              ))}
+            </div>
+            {!filtered.length && (
+              <div className="sf-empty">
+                <ShoppingBag size={40} />
+                <h3>
+                  {store.products.length
+                    ? "Nothing matches just yet."
+                    : "Something good is coming."}
+                </h3>
+                <p>
+                  {store.products.length
+                    ? "Try another search or category."
+                    : "Come back soon to explore our collection."}
+                </p>
+                {store.products.length > 0 && (
+                  <Button
+                    variant="secondary"
+                    onPress={() => {
+                      setQuery("");
+                      setCategory("");
+                    }}
+                  >
+                    Clear filters
+                  </Button>
+                )}
+              </div>
+            )}
+          </section>
+          <section className="sf-about">
+            <span className="sf-overline">A NOTE FROM THE STORE</span>
+            <h2>
+              A home for things
+              <br />
+              you’ll love.
+            </h2>
+            <p>
+              {store.description ||
+                `Welcome to ${store.name}. Thank you for supporting our store.`}
+            </p>
+          </section>
+        </main>
+        <footer className="sf-footer">
+          <strong>{store.name}</strong>
+          <span>
+            © {new Date().getFullYear()} {store.name}
+          </span>
+          <Link href="/">Powered by EYN</Link>
+        </footer>
+        {selected && (
+          <ProductDetail
+            product={
+              store.products.find((p) => p.id === selected.id) || selected
+            }
+            currency={store.currency}
+            close={() => select(null)}
+          />
+        )}
+      </div>
+    </CartProvider>
+  );
+}

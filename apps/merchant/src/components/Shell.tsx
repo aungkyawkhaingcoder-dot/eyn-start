@@ -11,6 +11,7 @@ import {
   LayoutDashboard,
   Store,
   Package,
+  ShoppingBag,
   Settings,
   ArrowUpRight,
   LogOut,
@@ -65,6 +66,7 @@ export function Shell({
       ? [
           { href: base, label: "Overview", icon: LayoutDashboard },
           { href: `${base}/products`, label: "Products", icon: Package },
+          { href: `${base}/orders`, label: "Orders", icon: ShoppingBag },
           { href: `${base}/settings`, label: "Store settings", icon: Settings },
         ]
       : []),

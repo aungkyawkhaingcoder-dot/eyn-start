@@ -48,6 +48,11 @@ export function storeInput(value: unknown) {
     currency,
     description: text(body, "description", 1000),
     published: body.published,
+    ...(body.logoUrl !== undefined ? { logoUrl: imageUrl(body.logoUrl) } : {}),
+    ...(body.coverUrl !== undefined
+      ? { coverUrl: imageUrl(body.coverUrl) }
+      : {}),
+    ...(body.theme !== undefined ? { theme: themeName(body.theme) } : {}),
   };
 }
 export function productInput(value: unknown) {
@@ -82,5 +87,37 @@ export function productInput(value: unknown) {
     inventory: body.inventory,
     imageUrl,
     published: body.published,
+    ...(body.categoryName !== undefined
+      ? { categoryName: text(body, "categoryName", 80) }
+      : {}),
+    ...(body.tags !== undefined ? { tags: tagNames(body.tags) } : {}),
   };
+}
+
+function imageUrl(value: unknown) {
+  if (typeof value !== "string" || value.length > 2000)
+    throw invalid("Invalid image URL.");
+  if (!value) return "";
+  try {
+    if (new URL(value).protocol !== "https:") throw Error();
+  } catch {
+    throw invalid("Images must use HTTPS.");
+  }
+  return value;
+}
+function themeName(value: unknown) {
+  if (value !== "eyn-light" && value !== "eyn-dark")
+    throw invalid("Invalid theme.");
+  return value;
+}
+function tagNames(value: unknown): string[] {
+  if (
+    !Array.isArray(value) ||
+    value.length > 10 ||
+    value.some(
+      (t) => typeof t !== "string" || !t.trim() || t.trim().length > 40,
+    )
+  )
+    throw invalid("Use up to 10 tags, each 1–40 characters.");
+  return [...new Set(value.map((t) => t.trim().toLowerCase()))];
 }

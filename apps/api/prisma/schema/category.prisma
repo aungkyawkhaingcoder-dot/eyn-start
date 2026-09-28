@@ -1,6 +1,10 @@
 model Category {
   id       Int       @id @default(autoincrement())
   name     String
+  storeId  Int?
+  store    Store?    @relation(fields: [storeId], references: [id])
   posts    Post[]
   products Product[]
+
+  @@unique([storeId, name])
 }

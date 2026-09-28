@@ -1,13 +1,21 @@
 model Tag {
   id        Int        @id @default(autoincrement())
   name      String
+  storeId   Int?
+  store     Store?     @relation(fields: [storeId], references: [id])
   taggables Taggable[]
+
+  @@unique([storeId, name])
 }
 
 model Taggable {
-  id     Int    @id @default(autoincrement())
-  tagId  Int
-  type   String @db.VarChar(7)
-  typeId Int
-  tag    Tag    @relation(fields: [tagId], references: [id])
+  id        Int      @id @default(autoincrement())
+  tagId     Int
+  type      String   @db.VarChar(7)
+  typeId    Int
+  tag       Tag      @relation(fields: [tagId], references: [id])
+  productId Int?
+  product   Product? @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([tagId, productId])
 }

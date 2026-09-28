@@ -5,8 +5,18 @@ import type {
   StoreDraft,
   ProductDraft,
   Storefront,
+  StoreOrder,
 } from "../types/store";
 export const storeApi = {
+  orders: async (id: number, page: number) =>
+    (
+      await api.get<StoreOrder[]>(`/api/v1/stores/${id}/orders`, {
+        params: { page },
+      })
+    ).data,
+  orderStatus: async (storeId: number, id: number, status: string) =>
+    (await api.patch(`/api/v1/stores/${storeId}/orders/${id}`, { status }))
+      .data,
   me: async () =>
     (await api.get<{ currentUserId: number }>("/api/v1/admin/user")).data,
   list: async () => (await api.get<Store[]>("/api/v1/stores")).data,
@@ -23,7 +33,7 @@ export const storeApi = {
       await api.request<Product>({
         url: `/api/v1/stores/${storeId}/products${id ? `/${id}` : ""}`,
         method: id ? "PUT" : "POST",
-        data,
+        data: { ...data, tags: data.tags?.filter(Boolean) },
       })
     ).data,
   deleteProduct: async (storeId: number, id: number) =>

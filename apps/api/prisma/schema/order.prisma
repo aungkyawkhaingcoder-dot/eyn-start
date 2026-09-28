@@ -1,19 +1,41 @@
 model Order {
-  id         Int               @id @default(autoincrement())
-  totalPrice Decimal           @db.Decimal(10, 2)
-  userId     Int
-  code       String            @db.VarChar(20)
-  createdAt  DateTime          @default(now())
-  updatedAt  DateTime          @updatedAt
-  user       User              @relation(fields: [userId], references: [id])
-  products   ProductsOnOrder[]
+  id           Int               @id @default(autoincrement())
+  totalPrice   Decimal           @db.Decimal(16, 2)
+  userId       Int?
+  storeId      Int?
+  store        Store?            @relation(fields: [storeId], references: [id])
+  status       OrderStatus       @default(PENDING)
+  currency     String            @default("MMK") @db.VarChar(3)
+  customerName String            @default("") @db.VarChar(120)
+  phone        String            @default("") @db.VarChar(30)
+  address      String            @default("") @db.VarChar(1000)
+  notes        String            @default("") @db.VarChar(1000)
+  requestKey   String?           @db.VarChar(80)
+  requestHash  String?           @db.VarChar(64)
+  code         String            @db.VarChar(20)
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  user         User?             @relation(fields: [userId], references: [id], onDelete: Restrict)
+  products     ProductsOnOrder[]
+
+  @@unique([storeId, requestKey])
+  @@index([storeId, status, createdAt])
 }
 
 model ProductsOnOrder {
-  id        Int     @id @default(autoincrement())
-  orderId   Int
-  productId Int
-  quantity  Int     @db.SmallInt
-  order     Order   @relation(fields: [orderId], references: [id])
-  product   Product @relation(fields: [productId], references: [id])
+  id          Int     @id @default(autoincrement())
+  orderId     Int
+  productId   Int
+  quantity    Int     @db.SmallInt
+  productName String  @default("") @db.VarChar(255)
+  unitPrice   Decimal @default(0) @db.Decimal(12, 2)
+  order       Order   @relation(fields: [orderId], references: [id])
+  product     Product @relation(fields: [productId], references: [id])
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
 }

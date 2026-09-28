@@ -22,6 +22,9 @@ export function StoreEditor({
     description: store?.description || "",
     currency: store?.currency || "MMK",
     published: store?.published || false,
+    logoUrl: store?.logoUrl || "",
+    coverUrl: store?.coverUrl || "",
+    theme: store?.theme || "eyn-light",
   });
   const set = (key: keyof StoreDraft, value: string | boolean) =>
     setForm((s) => ({ ...s, [key]: value }));
@@ -91,6 +94,35 @@ export function StoreEditor({
         <p className="field-help">
           Changing currency changes the label only. Existing prices are not
           converted.
+        </p>
+        <h2>Storefront appearance</h2>
+        <Field
+          label="Logo URL (HTTPS)"
+          type="url"
+          value={form.logoUrl || ""}
+          onChange={(v) => set("logoUrl", v)}
+          maxLength={2000}
+        />
+        <Field
+          label="Cover image URL (HTTPS)"
+          type="url"
+          value={form.coverUrl || ""}
+          onChange={(v) => set("coverUrl", v)}
+          maxLength={2000}
+        />
+        <label className="select-label">
+          Storefront theme
+          <select
+            value={form.theme}
+            onChange={(e) => set("theme", e.target.value)}
+          >
+            <option value="eyn-light">EYN Light</option>
+            <option value="eyn-dark">EYN Dark</option>
+          </select>
+        </label>
+        <p className="field-help">
+          Your storefront uses this theme independently of your merchant
+          workspace.
         </p>
         <div className="visibility">
           <div>

@@ -341,7 +341,10 @@ function ProductEditor({
     inventory: product?.inventory || 0,
     imageUrl: product?.imageUrl || "",
     published: product?.published || false,
+    categoryName: product?.category?.name || "",
+    tags: product?.taggables?.map((t) => t.tag.name) || [],
   });
+  const [tagText, setTagText] = useState((form.tags || []).join(", "));
   const action = useSaveAction();
   const set = (key: keyof ProductDraft, value: string | number | boolean) =>
     setForm((s) => ({ ...s, [key]: value }));
@@ -351,7 +354,18 @@ function ProductEditor({
       onSubmit={(e) => {
         e.preventDefault();
         action.save(
-          () => storeApi.saveProduct(storeId, form, product?.id),
+          () =>
+            storeApi.saveProduct(
+              storeId,
+              {
+                ...form,
+                tags: tagText
+                  .split(",")
+                  .map((t) => t.trim())
+                  .filter(Boolean),
+              },
+              product?.id,
+            ),
           "Product saved",
           done,
         );
@@ -375,6 +389,22 @@ function ProductEditor({
           onChange={(v) => set("description", v)}
           maxLength={3000}
         />
+        <div className="form-grid">
+          <Field
+            label="Category"
+            value={form.categoryName || ""}
+            onChange={(v) => set("categoryName", v)}
+            maxLength={80}
+          />
+          <Field
+            label="Tags (comma separated)"
+            value={tagText}
+            onChange={setTagText}
+          />
+        </div>
+        <p className="field-help">
+          Use the featured tag to include this product in your store’s picks.
+        </p>
         <div className="form-grid">
           <Field
             label={`Price (${currency})`}

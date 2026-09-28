@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { listOrders, updateOrder } from "../../controller/orderController";
 import {
   listStores,
   createStore,
@@ -17,6 +18,8 @@ router.use(storeRequestMiddleware);
 router.get("/", listStores);
 router.post("/", createStore);
 router.get("/:storeId", getStore);
+router.get("/:storeId/orders", listOrders);
+router.patch("/:storeId/orders/:id", updateOrder);
 router.put("/:storeId", updateStore);
 router.get("/:storeId/products", listStoreProducts);
 router.post("/:storeId/products", createStoreProduct);

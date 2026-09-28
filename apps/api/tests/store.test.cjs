@@ -15,7 +15,8 @@ const store={id:10,ownerId:1,...draft};let wrote=false;
 const prisma={
  store:{findFirst:async({where})=>where.id===store.id&&where.ownerId===store.ownerId?store:null,
  update:async({where,data})=>{assert.equal(where.ownerId,2);throw Object.assign(Error(),{code:'P2025'});}},
- storeProduct:{findMany:async()=>[],create:async()=>{wrote=true;},updateMany:async({where})=>{assert.equal(where.store.ownerId,2);return {count:0};},deleteMany:async({where})=>{assert.equal(where.store.ownerId,2);assert.equal(where.storeId,10);return {count:0};}},
+ product:{findMany:async()=>[],create:async()=>{wrote=true;},updateMany:async({where})=>{assert.equal(where.store.ownerId,2);return {count:0};},deleteMany:async({where})=>{assert.equal(where.store.ownerId,2);assert.equal(where.storeId,10);return {count:0};}},
+ productsOnOrder:{groupBy:async()=>[]},
  $transaction:async fn=>fn(prisma)
 };
 const id=require.resolve('../src/lib/prisma.ts');require.cache[id]={id,filename:id,loaded:true,exports:{prisma}};
@@ -26,6 +27,18 @@ test('another user cannot read, edit, add products or delete products in a store
 });
 test('public storefront only selects published data and excludes owner credentials',async()=>{
  const original=prisma.store.findFirst;
- prisma.store.findFirst=async({where,select})=>{assert.deepEqual(where,{slug:'eyn-studio',published:true,owner:{status:'ACTIVE'}});assert.equal(select.ownerId,undefined);assert.equal(select.owner,undefined);assert.deepEqual(select.products.where,{published:true});return {name:'EYN'};};
+ prisma.store.findFirst=async({where,select})=>{assert.deepEqual(where,{slug:'eyn-studio',published:true,owner:{status:'ACTIVE'}});assert.equal(select.ownerId,undefined);assert.equal(select.owner,undefined);assert.deepEqual(select.products.where,{published:true,status:'ACTIVE'});return {id:10,name:'EYN'};};
  try{assert.equal((await service.publicStore('eyn-studio')).name,'EYN');}finally{prisma.store.findFirst=original;}
+});
+test('best sellers are scoped to completed orders in the same store',async()=>{
+ const original=prisma.store.findFirst;
+ const group=prisma.productsOnOrder.groupBy;
+ prisma.store.findFirst=async()=>({id:10,name:'EYN'});
+ prisma.productsOnOrder.groupBy=async query=>{
+  assert.deepEqual(query.where.order,{storeId:10,status:'COMPLETED'});
+  assert.deepEqual(query.where.product,{storeId:10,published:true,status:'ACTIVE'});
+  assert.deepEqual(query.orderBy,{_sum:{quantity:'desc'}});
+  return [{productId:5},{productId:2}];
+ };
+ try{assert.deepEqual((await service.publicStore('eyn-studio')).bestSellerIds,[5,2]);}finally{prisma.store.findFirst=original;prisma.productsOnOrder.groupBy=group;}
 });

@@ -1,18 +1,26 @@
 model Product {
-  id           Int               @id @default(autoincrement())
-  name         String            @db.VarChar(255)
-  description  String
-  price        Float
-  discount     Decimal           @default(0) @db.Decimal(10, 2)
-  rating       Int               @default(0)
-  inventory    Int               @default(0)
-  status       Status            @default(ACTIVE)
-  typeId       Int
-  categoryId   Int
-  createdAt    DateTime          @default(now())
-  updatedAt    DateTime          @updatedAt
-  productImage Image[]
-  category     Category          @relation(fields: [categoryId], references: [id])
-  type         Type              @relation(fields: [typeId], references: [id])
-  orders       ProductsOnOrder[]
+  id                   Int               @id @default(autoincrement())
+  name                 String            @db.VarChar(255)
+  description          String
+  price                Decimal           @db.Decimal(12, 2)
+  storeId              Int?
+  store                Store?            @relation(fields: [storeId], references: [id])
+  legacyStoreProductId Int?              @unique
+  imageUrl             String            @default("") @db.VarChar(2000)
+  published            Boolean           @default(false)
+  taggables            Taggable[]
+  discount             Decimal           @default(0) @db.Decimal(10, 2)
+  rating               Int               @default(0)
+  inventory            Int               @default(0)
+  status               Status            @default(ACTIVE)
+  typeId               Int?
+  categoryId           Int?
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+  productImage         Image[]
+  category             Category?         @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  type                 Type?             @relation(fields: [typeId], references: [id], onDelete: Restrict)
+  orders               ProductsOnOrder[]
+
+  @@index([storeId, published, createdAt])
 }
