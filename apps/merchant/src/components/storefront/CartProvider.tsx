@@ -20,12 +20,15 @@ export function useCart() {
 export function CartProvider({
   store,
   children,
+  preview = false,
 }: {
   store: Storefront;
+  preview?: boolean;
   children: React.ReactNode;
 }) {
   const [cart] = useState(createCart);
   useEffect(() => {
+    if (preview) return;
     const key = `eyn-cart-v1:${store.id}`;
     try {
       const saved = JSON.parse(localStorage.getItem(key) || "{}");
@@ -53,7 +56,7 @@ export function CartProvider({
       }
     });
     return dispose;
-  }, [cart, store.id]);
+  }, [cart, store.id, preview]);
   return <CartContext.Provider value={cart}>{children}</CartContext.Provider>;
 }
 export function money(value: string | number, currency: string) {

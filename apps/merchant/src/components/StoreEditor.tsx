@@ -1,22 +1,25 @@
 "use client";
 import { Save, Plus, X } from "lucide-react";
 import { useState } from "react";
+import { observable, type Observable } from "@legendapp/state";
+import { useSelector } from "@legendapp/state/react";
+import { StorePreview } from "./StorePreview";
 import { useRouter } from "next/navigation";
 import { Button, Spinner, Switch } from "@heroui/react";
 import { Field } from "./Fields";
 import { storeApi } from "../services/storeApi";
 import { useSaveAction } from "../hooks/useStores";
-import type { Store, StoreDraft } from "../types/store";
+import type { Store, StoreDraft, Product } from "../types/store";
 export function StoreEditor({
   store,
   onSaved,
+  products = [],
 }: {
   store?: Store;
+  products?: Product[];
   onSaved?: () => void;
 }) {
-  const router = useRouter();
-  const { loading, save } = useSaveAction();
-  const [form, setForm] = useState<StoreDraft>({
+  const [draft] = useState(() => observable<StoreDraft>({
     name: store?.name || "",
     slug: store?.slug || "",
     description: store?.description || "",
@@ -25,9 +28,19 @@ export function StoreEditor({
     logoUrl: store?.logoUrl || "",
     coverUrl: store?.coverUrl || "",
     theme: store?.theme || "eyn-light",
-  });
+  }));
+  return <div className="store-editor-preview">
+    <StoreEditorForm draft={draft} store={store} onSaved={onSaved} />
+    <StorePreview draft={draft} store={store} products={products} />
+  </div>;
+}
+
+function StoreEditorForm({ draft, store, onSaved }: { draft: Observable<StoreDraft>; store?: Store; onSaved?: () => void }) {
+  const router = useRouter();
+  const { loading, save } = useSaveAction();
+  const form = useSelector(() => draft.get());
   const set = (key: keyof StoreDraft, value: string | boolean) =>
-    setForm((s) => ({ ...s, [key]: value }));
+    draft.assign({ [key]: value });
   return (
     <form
       className="editor"
@@ -130,13 +143,17 @@ export function StoreEditor({
             <p>Let visitors browse your published products.</p>
           </div>
           <Switch
+            className="eyn-publish-switch"
             aria-label="Publish store"
             isSelected={form.published}
             onChange={(v) => set("published", v)}
           >
-            <Switch.Control>
-              <Switch.Thumb />
-            </Switch.Control>
+            <Switch.Content>
+              <Switch.Control>
+                <Switch.Thumb />
+              </Switch.Control>
+              <span className="eyn-switch-status" aria-hidden="true">{form.published ? "On" : "Off"}</span>
+            </Switch.Content>
           </Switch>
         </div>
         <div className="form-actions">

@@ -95,7 +95,7 @@ function ProductDetail({
     </dialog>
   );
 }
-export function StorefrontView({ store }: { store: Storefront }) {
+export function StorefrontView({ store, preview = false }: { store: Storefront; preview?: boolean }) {
   const [query, setQuery] = useState(""),
     [category, setCategory] = useState(""),
     [selected, select] = useState<Product | null>(null);
@@ -120,7 +120,7 @@ export function StorefrontView({ store }: { store: Storefront }) {
     p.taggables?.some((t) => t.tag.name === "featured"),
   );
   return (
-    <CartProvider store={store}>
+    <CartProvider store={store} preview={preview}>
       <div className="sf" data-store-theme={store.theme || "eyn-light"}>
         <div className="sf-announcement">
           A little discovery. Something you’ll love.
@@ -141,7 +141,7 @@ export function StorefrontView({ store }: { store: Storefront }) {
           <nav aria-label="Store navigation">
             <a href="#collection">Shop the collection</a>
           </nav>
-          <CartPanel store={store} />
+          {!preview && <CartPanel store={store} />}
         </header>
         <main className="sf-main">
           <section

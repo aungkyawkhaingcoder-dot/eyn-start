@@ -71,7 +71,7 @@ export function StoreWorkspace({
         )}
       </div>
       {view === "settings" ? (
-        <StoreEditor key={s.updatedAt} store={s} onSaved={store.refresh} />
+        <StoreEditor key={s.updatedAt} store={s} products={products.data || []} onSaved={store.refresh} />
       ) : view === "products" ? (
         <ProductManager
           store={s}
@@ -438,13 +438,17 @@ function ProductEditor({
             <p>Visible when your store is also published.</p>
           </div>
           <Switch
+            className="eyn-publish-switch"
             aria-label="Publish product"
             isSelected={form.published}
             onChange={(v) => set("published", v)}
           >
-            <Switch.Control>
-              <Switch.Thumb />
-            </Switch.Control>
+            <Switch.Content>
+              <Switch.Control>
+                <Switch.Thumb />
+              </Switch.Control>
+              <span className="eyn-switch-status" aria-hidden="true">{form.published ? "On" : "Off"}</span>
+            </Switch.Content>
           </Switch>
         </div>
         <div className="form-actions">
