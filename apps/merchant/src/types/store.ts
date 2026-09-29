@@ -1,5 +1,9 @@
 export type StorefrontConfig = Partial<
   Record<
+    | "themeHue"
+    | "themeChroma"
+    | "themeLightness"
+    | "themeBase"
     | "fontFamily"
     | "radius"
     | "formRadius"

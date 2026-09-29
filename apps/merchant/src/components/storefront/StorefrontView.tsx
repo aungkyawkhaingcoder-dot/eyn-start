@@ -1,5 +1,11 @@
 "use client";
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
 import Link from "next/link";
 import { Button } from "@heroui/react";
 import { Search, X, ShoppingBag } from "lucide-react";
@@ -32,7 +38,7 @@ function Collection({
           <span className="sf-overline">{subtitle}</span>
           <h2>{title}</h2>
         </div>
-        <span>{products.length} pieces</span>
+        <span>{products.length} products</span>
       </div>
       <div className="sf-grid">
         {products.map((p) => (
@@ -84,7 +90,7 @@ function ProductDetail({
           <strong>{money(product.price, currency)}</strong>
           <p className="sf-description">
             {product.description ||
-              "A carefully selected addition to our collection."}
+              "Contact the store for more product details."}
           </p>
           <p>
             {product.inventory
@@ -105,7 +111,12 @@ export function StorefrontView({
   preview?: boolean;
 }) {
   const config = store.storefrontConfig || {};
-  const copy = (name: CopyKey, fallback: string) => <EditableCopy name={name} value={config[name]} fallback={fallback} />;
+  const [failedCover, setFailedCover] = useState<string | null>(null);
+  const [failedLogo, setFailedLogo] = useState<string | null>(null);
+  const hasCover = !!store.coverUrl && failedCover !== store.coverUrl;
+  const copy = (name: CopyKey, fallback: string) => (
+    <EditableCopy name={name} value={config[name]} fallback={fallback} />
+  );
   const [query, setQuery] = useState(""),
     [category, setCategory] = useState(""),
     [selected, select] = useState<Product | null>(null);
@@ -139,9 +150,10 @@ export function StorefrontView({
         <div className="sf-announcement">{store.name}</div>
         <header className="sf-header">
           <Link className="sf-store-brand" href={`/shop/${store.slug}`}>
-            {store.logoUrl ? (
+            {store.logoUrl && failedLogo !== store.logoUrl ? (
               <img
                 src={store.logoUrl}
+                onError={() => setFailedLogo(store.logoUrl || "")}
                 alt={store.name}
                 referrerPolicy="no-referrer"
               />
@@ -156,36 +168,35 @@ export function StorefrontView({
           {!preview && <CartPanel store={store} />}
         </header>
         <main className="sf-main">
-            <section
-              className={`sf-hero ${store.coverUrl ? "sf-hero-image" : ""}`}
-            >
-              <div className="sf-hero-copy">
-                <span className="sf-overline">
-                  WELCOME TO {store.name.toUpperCase()}
-                </span>
-                <h1>{copy("heroTitle", `Welcome to ${store.name}`)}</h1>
-                <p>
-                  {copy("heroText", store.description || "Browse our products and find what you need.")}
-                </p>
-                <a className="sf-shop-link" href="#collection">
-                  {copy("buttonLabel", "Explore products")}
-                </a>
-              </div>
-              {store.coverUrl ? (
-                <img
-                  className="sf-cover"
-                  src={store.coverUrl}
-                  alt={`${store.name} collection`}
-                  referrerPolicy="no-referrer"
-                />
-              ) : (
-                <div className="sf-hero-art" aria-hidden="true">
-                  <div />
-                  <div />
-                  <span>{store.name.slice(0, 1)}</span>
-                </div>
-              )}
-            </section>
+          <section
+            className={`sf-hero ${hasCover ? "sf-hero-image" : "sf-hero-placeholder"}`}
+          >
+            <div className="sf-hero-copy">
+              <span className="sf-overline">
+                WELCOME TO {store.name.toUpperCase()}
+              </span>
+              <h1>{copy("heroTitle", `Welcome to ${store.name}`)}</h1>
+              <p>
+                {copy(
+                  "heroText",
+                  store.description ||
+                    "Browse our products and find what you need.",
+                )}
+              </p>
+              <a className="sf-shop-link" href="#collection">
+                {copy("buttonLabel", "Explore products")}
+              </a>
+            </div>
+            {hasCover ? (
+              <img
+                className="sf-cover"
+                src={store.coverUrl}
+                onError={() => setFailedCover(store.coverUrl || "")}
+                alt={`${store.name} collection`}
+                referrerPolicy="no-referrer"
+              />
+            ) : null}
+          </section>
           <div className="sf-promises">
             <span>
               <ShoppingBag size={18} />
@@ -194,20 +205,20 @@ export function StorefrontView({
             <span>Thoughtfully selected</span>
             <span>Your next favourite awaits</span>
           </div>
-            <Collection
-              title={copy("bestTitle", "Best sellers")}
-              subtitle="BEST SELLERS"
-              products={best}
-              currency={store.currency}
-              open={select}
-            />
-            <Collection
-              title={copy("featuredTitle", "Featured products")}
-              subtitle="HANDPICKED FOR YOU"
-              products={featured}
-              currency={store.currency}
-              open={select}
-            />
+          <Collection
+            title={copy("bestTitle", "Best sellers")}
+            subtitle="BEST SELLERS"
+            products={best}
+            currency={store.currency}
+            open={select}
+          />
+          <Collection
+            title={copy("featuredTitle", "Featured products")}
+            subtitle="HANDPICKED FOR YOU"
+            products={featured}
+            currency={store.currency}
+            open={select}
+          />
           <section id="collection" className="sf-section">
             <div className="sf-section-title">
               <div>
@@ -216,37 +227,39 @@ export function StorefrontView({
               </div>
               <span>{filtered.length} products</span>
             </div>
-            <div className="sf-filters">
-              <label className="sf-search">
-                <Search size={18} />
-                <input
-                  type="search"
-                  aria-label="Search products"
-                  placeholder="Search the collection"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                />
-              </label>
-              <div className="sf-categories" aria-label="Product categories">
-                <Button
-                  variant={category === "" ? "primary" : "ghost"}
-                  onPress={() => setCategory("")}
-                  aria-pressed={category === ""}
-                >
-                  All products
-                </Button>
-                {categories.map((name) => (
+            {store.products.length > 0 && (
+              <div className="sf-filters">
+                <label className="sf-search">
+                  <Search size={18} />
+                  <input
+                    type="search"
+                    aria-label="Search products"
+                    placeholder="Search the collection"
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                  />
+                </label>
+                <div className="sf-categories" aria-label="Product categories">
                   <Button
-                    key={name}
-                    variant={category === name ? "primary" : "ghost"}
-                    onPress={() => setCategory(name)}
-                    aria-pressed={category === name}
+                    variant={category === "" ? "primary" : "ghost"}
+                    onPress={() => setCategory("")}
+                    aria-pressed={category === ""}
                   >
-                    {name}
+                    All products
                   </Button>
-                ))}
+                  {categories.map((name) => (
+                    <Button
+                      key={name}
+                      variant={category === name ? "primary" : "ghost"}
+                      onPress={() => setCategory(name)}
+                      aria-pressed={category === name}
+                    >
+                      {name}
+                    </Button>
+                  ))}
+                </div>
               </div>
-            </div>
+            )}
             <div className="sf-grid">
               {filtered.map((p) => (
                 <ProductCard
@@ -284,13 +297,17 @@ export function StorefrontView({
               </div>
             )}
           </section>
-            <section className="sf-about">
-              <span className="sf-overline">A NOTE FROM THE STORE</span>
-              <h2>{copy("aboutTitle", `About ${store.name}`)}</h2>
-              <p>
-                {copy("aboutText", store.description || `Welcome to ${store.name}. Thank you for supporting our store.`)}
-              </p>
-            </section>
+          <section className="sf-about">
+            <span className="sf-overline">A NOTE FROM THE STORE</span>
+            <h2>{copy("aboutTitle", `About ${store.name}`)}</h2>
+            <p>
+              {copy(
+                "aboutText",
+                store.description ||
+                  `Welcome to ${store.name}. Thank you for supporting our store.`,
+              )}
+            </p>
+          </section>
         </main>
         <footer className="sf-footer">
           <strong>{store.name}</strong>

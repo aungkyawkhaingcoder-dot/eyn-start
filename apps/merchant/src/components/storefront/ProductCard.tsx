@@ -1,4 +1,5 @@
 "use client";
+import { useState } from "react";
 import { Button, Card } from "@heroui/react";
 import { Package, Plus } from "lucide-react";
 import { useSelector } from "@legendapp/state/react";
@@ -6,10 +7,12 @@ import toast from "react-hot-toast";
 import type { Product } from "../../types/store";
 import { useCart, money } from "./CartProvider";
 export function ProductImage({ product }: { product: Product }) {
-  return product.imageUrl ? (
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  return product.imageUrl && failedUrl !== product.imageUrl ? (
     <img
       src={product.imageUrl}
       alt={product.name}
+      onError={() => setFailedUrl(product.imageUrl)}
       loading="lazy"
       referrerPolicy="no-referrer"
     />

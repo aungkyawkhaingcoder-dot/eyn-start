@@ -239,3 +239,60 @@
 .theme-quick-control > [data-slot="color-slider"] { min-height:40px; justify-content:center; }
 @media(max-width:1000px) { .theme-quick-toolbar { grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; } }
 @media(max-width:550px) { .theme-quick-toolbar { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+
+/* Theme builder: one compact control strip, with detailed accent editing on demand. */
+.theme-quick-toolbar { grid-template-columns:minmax(140px,1.4fr) minmax(100px,1fr) repeat(4,minmax(82px,.8fr)) auto; gap:14px; padding:12px 14px; }
+.theme-tone-slider { flex:1; min-width:0; width:100%; }
+.theme-tone-slider [data-slot="slider-track"] { height:24px; border-radius:999px; background:linear-gradient(to right,#353535,#ededed); }
+.theme-tone-slider [data-slot="slider-thumb"] { width:20px; height:20px; border:2px solid white; background:transparent; box-shadow:0 1px 4px #0004; }
+.theme-accent-trigger { width:32px; min-width:32px; height:32px; padding:3px; }
+.theme-accent-trigger span { display:block; width:24px; height:24px; border-radius:50%; border:2px solid #ffffff80; }
+.theme-toolbar-actions { display:flex; gap:4px; align-items:center; min-height:40px; }
+.theme-toolbar-actions button { font-size:13px; white-space:nowrap; }
+.theme-accent-popover { width:320px; max-width:calc(100vw - 24px); padding:18px; }
+.theme-accent-popover [role="dialog"] { display:grid; gap:18px; }
+.theme-accent-popover label { display:grid; gap:10px; font-size:13px; }
+@media(max-width:1300px) { .theme-quick-toolbar { grid-template-columns:repeat(4,minmax(0,1fr)); } }
+@media(max-width:650px) { .theme-quick-toolbar { grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; } .theme-toolbar-actions { grid-column:1 / -1; justify-content:space-between; } }
+.theme-tone-slider[data-orientation="horizontal"] .slider__track { border-inline-color:transparent; background-origin:border-box; }
+.theme-tone-slider .slider__thumb::after { display:none; }
+.theme-tone-slider .slider__thumb { border-radius:50%; }
+
+/* Keep the canvas prominent; secondary style settings live in a popover. */
+.theme-quick-toolbar { grid-template-columns:minmax(150px,1.35fr) minmax(120px,1fr) minmax(175px,1fr) minmax(115px,.8fr) auto; }
+.design-theme-controls,.design-canvas-content { min-width:0; }
+.design-canvas-content .store-preview { position:static; }
+.theme-style-popover { width:300px; max-width:calc(100vw - 24px); padding:18px; }
+.theme-style-popover [role="dialog"] { display:grid; gap:16px; }
+.theme-value-label { display:flex; justify-content:space-between; align-items:center; }
+.theme-value-label output { color:var(--muted); font-variant-numeric:tabular-nums; font-size:12px; }
+.theme-preset-swatches { display:flex; gap:8px; }
+.theme-preset-swatches button { width:36px; height:36px; min-width:36px; padding:5px; }
+.theme-preset-swatches button[aria-pressed="true"] { outline:2px solid currentColor; outline-offset:1px; }
+.theme-preset-swatches span { width:24px; height:24px; border-radius:50%; display:block; border:1px solid #8885; }
+.theme-tone-slider .slider__thumb { touch-action:none; }
+@media(max-width:1200px) { .theme-quick-toolbar { grid-template-columns:repeat(2,minmax(0,1fr)); } .theme-toolbar-actions { grid-column:1 / -1; justify-content:space-between; } }
+@media(prefers-reduced-motion:reduce) { .theme-tone-slider .slider__thumb { transition:none; } }
+
+.theme-accent-trigger .theme-color-wheel {
+  background: radial-gradient(circle, #ffffff66 0%, transparent 70%), conic-gradient(#ffafcc, #ffe7a8, #b7f1c6, #a8e8ff, #c8b6ff, #ffafcc);
+  border:3px solid #ffffff66;
+  width:28px; height:28px;
+}
+.theme-tone-slider[data-orientation="horizontal"] .slider__track { height:28px; }
+.theme-tone-slider .slider__thumb { width:22px; height:22px; background:transparent; box-shadow:none; border:2px solid #fff; }
+
+.theme-accent-trigger .theme-color-wheel {
+  position:relative; isolation:isolate; overflow:hidden; border:0;
+  background:conic-gradient(from 10deg,#ffd0de,#fff0ad,#c6f2c8,#bceeff,#d5c7ff,#ffd0de);
+}
+.theme-accent-trigger .theme-color-wheel::before {
+  content:""; position:absolute; inset:4px; border-radius:50%;
+  background:conic-gradient(from 60deg,#ffe3a4,#bcf2d0,#b5dfff,#d5bcff,#ffc4dc,#ffe3a4);
+}
+.theme-accent-trigger .theme-color-wheel::after {
+  content:""; position:absolute; inset:4px; border-radius:50%;
+  background:linear-gradient(135deg,#fff8,transparent 55%,#fff5);
+}
+.theme-accent-popover [data-slot="color-area"] { width:100%; height:170px; border-radius:8px; }
+.theme-accent-popover [data-slot="color-field"] { width:100%; }

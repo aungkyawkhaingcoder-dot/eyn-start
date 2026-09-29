@@ -101,6 +101,8 @@ export function themeStyle(config: StorefrontConfig, dark: boolean) {
     "--sf-font": config.fontFamily === "georgia" ? "Georgia, serif" : config.fontFamily === "arial" ? "Arial, Helvetica, sans-serif" : "system-ui, sans-serif",
     "--sf-radius": `${config.radius || "8"}px`,
     "--sf-form-radius": `${config.formRadius || "8"}px`,
+    "--sf-line": `color-mix(in oklab, ${c.text} ${dark ? "18%" : "12%"}, ${c.background})`,
+    "--sf-soft": `color-mix(in oklab, ${c.primary} ${dark ? "12%" : "8%"}, ${c.surface})`,
     "--sf-bg": c.background,
     "--sf-panel": c.surface,
     "--sf-ink": c.text,

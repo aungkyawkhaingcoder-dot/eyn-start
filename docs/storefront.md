@@ -66,3 +66,19 @@ The public endpoint returns config only for eligible published stores. Preview
 changes remain local until saved, with checkout and cart persistence disabled.
 Logo upload, background removal, automatic logo recoloring, AI palette suggestions,
 and section drag-and-drop are not included in this version.
+
+### Theme toolbar
+
+The storefront editor uses a compact HeroUI control strip. Accent hue, chroma and
+lightness generate an OKLCH-based palette; Base controls the tint of neutral
+surfaces (not their brightness). Light/dark mode is separate. Lavender matches
+the supplied HeroUI reference parameters; EYN, Mint, Ocean and Rose are local
+presets, not imported HeroUI templates. Font and radius settings remain independent.
+The older logo/harmony palette controls are on hold; logo and cover URLs remain editable.
+
+Changes update canvas CSS variables without rerendering the product tree and are
+coalesced to animation frames. Existing local drafts and Apply to storefront save
+behavior are retained. Colors and the four bounded numeric-string seed fields
+are stored in the existing storefrontConfig JSON; no migration is needed.
+Reset colors restores the EYN palette in the selected mode, preserving copy,
+logo, font and radii. It does not publish until Apply is pressed.

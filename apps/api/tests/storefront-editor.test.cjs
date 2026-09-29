@@ -10,3 +10,8 @@ test('legacy store updates omit config; an explicit empty config resets defaults
  assert.equal(Object.hasOwn(storeInput(base),'storefrontConfig'),false);
  assert.deepEqual(storeInput({...base,storefrontConfig:{}}).storefrontConfig,{});
 });
+test('theme generator parameters are bounded and survive save validation',()=>{
+ const config={themeHue:'281.6396234331059',themeChroma:'0.11949973822037381',themeLightness:'0.7712331152153334',themeBase:'0.016'};
+ assert.deepEqual(storeInput({...base,storefrontConfig:config}).storefrontConfig,config);
+ for(const config of [{themeHue:'361'},{themeBase:'0.05'},{themeChroma:'NaN'},{themeLightness:'-1'},{themeHue:''},{themeBase:0.01}]) assert.throws(()=>storeInput({...base,storefrontConfig:config}));
+});

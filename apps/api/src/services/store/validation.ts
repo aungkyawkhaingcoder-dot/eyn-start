@@ -130,6 +130,11 @@ function storefrontConfig(value: unknown): Record<string, string | boolean> {
   const colors = ["background", "surface", "text", "muted", "primary", "buttonText", "accent"];
   for (const [key, value] of Object.entries(body)) {
     if (Object.hasOwn(copy, key)) result[key] = text(body, key, copy[key]!);
+    else if (["themeHue", "themeChroma", "themeLightness", "themeBase"].includes(key)) {
+      const max = key === "themeHue" ? 360 : key === "themeChroma" ? .4 : key === "themeBase" ? .04 : 1;
+      if (typeof value !== "string" || !value.trim() || !Number.isFinite(Number(value)) || Number(value) < 0 || Number(value) > max) throw invalid(`Invalid ${key}.`);
+      result[key] = String(Number(value));
+    }
     else if (["fontFamily", "radius", "formRadius"].includes(key)) {
       const allowed = key === "fontFamily" ? ["system", "arial", "georgia"] : ["0", "4", "8", "12", "16"];
       if (typeof value !== "string" || !allowed.includes(value)) throw invalid(`Invalid ${key}.`);
