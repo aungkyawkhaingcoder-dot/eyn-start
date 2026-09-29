@@ -49,3 +49,20 @@ The existing Post schema remains unchanged for a later blog feature. Before addi
 Browser fixtures verify the UI/transport contract, not a live deployment. A real database migration and a manual store → checkout → merchant-order smoke test remain deployment steps.
 
 Component references: [Legend-State React API](https://legendapp.com/open-source/state/v2/react/react-api/) and [HeroUI Button](https://heroui.com/en/docs/react/components/button).
+
+### Storefront editor
+
+Merchant owners can open `/stores/:id/editor` to edit bounded plain-text copy,
+section visibility, and seven color roles. Empty copy uses the generic storefront
+defaults. Color harmonies are generated locally (no AI or external image service).
+Contrast feedback uses the WCAG relative luminance formula and a 4.5:1 text target;
+it is advisory. Custom colors override light/dark defaults; Reset colors applies
+the selected theme's palette.
+
+Configuration is stored in `Store.storefrontConfig` (JSONB) via the existing
+owner-scoped store update endpoint. Omitted config is preserved for older clients;
+an explicit empty object resets it. Migration: `20260929000100_storefront_editor`.
+The public endpoint returns config only for eligible published stores. Preview
+changes remain local until saved, with checkout and cart persistence disabled.
+Logo upload, background removal, automatic logo recoloring, AI palette suggestions,
+and section drag-and-drop are not included in this version.

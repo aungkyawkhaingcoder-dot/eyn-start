@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useStore, useProducts, useSaveAction } from "../hooks/useStores";
 import { storeApi } from "../services/storeApi";
+import { StorefrontEditor } from "./StorefrontEditor";
 import { StoreEditor } from "./StoreEditor";
 import { Field } from "./Fields";
 import { Loading, Failure } from "./Feedback";
@@ -26,7 +27,7 @@ export function StoreWorkspace({
 }: {
   id: number;
   cacheScope: string;
-  view: "overview" | "products" | "settings";
+  view: "overview" | "products" | "settings" | "editor";
 }) {
   const store = useStore(id, cacheScope);
   const products = useProducts(id, cacheScope);
@@ -40,7 +41,7 @@ export function StoreWorkspace({
   const items = products.data || [];
   return (
     <>
-      <div className="page-heading">
+      {view !== "editor" && <div className="page-heading">
         <div>
           <span className="eyebrow">
             {s.name} / {view}
@@ -69,9 +70,20 @@ export function StoreWorkspace({
         ) : (
           <Chip>Draft storefront</Chip>
         )}
-      </div>
-      {view === "settings" ? (
-        <StoreEditor key={s.updatedAt} store={s} products={products.data || []} onSaved={store.refresh} />
+      </div>}
+      {view === "editor" ? (
+        <StorefrontEditor
+          key={s.updatedAt}
+          store={s}
+          products={products.data || []}
+          onSaved={store.refresh}
+        />
+      ) : view === "settings" ? (
+        <StoreEditor
+          key={s.updatedAt}
+          store={s}
+          onSaved={store.refresh}
+        />
       ) : view === "products" ? (
         <ProductManager
           store={s}
@@ -447,7 +459,9 @@ function ProductEditor({
               <Switch.Control>
                 <Switch.Thumb />
               </Switch.Control>
-              <span className="eyn-switch-status" aria-hidden="true">{form.published ? "On" : "Off"}</span>
+              <span className="eyn-switch-status" aria-hidden="true">
+                {form.published ? "On" : "Off"}
+              </span>
             </Switch.Content>
           </Switch>
         </div>

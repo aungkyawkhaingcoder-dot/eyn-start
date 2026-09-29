@@ -3,20 +3,17 @@ import { Save, Plus, X } from "lucide-react";
 import { useState } from "react";
 import { observable, type Observable } from "@legendapp/state";
 import { useSelector } from "@legendapp/state/react";
-import { StorePreview } from "./StorePreview";
 import { useRouter } from "next/navigation";
 import { Button, Spinner, Switch } from "@heroui/react";
 import { Field } from "./Fields";
 import { storeApi } from "../services/storeApi";
 import { useSaveAction } from "../hooks/useStores";
-import type { Store, StoreDraft, Product } from "../types/store";
+import type { Store, StoreDraft } from "../types/store";
 export function StoreEditor({
   store,
   onSaved,
-  products = [],
 }: {
   store?: Store;
-  products?: Product[];
   onSaved?: () => void;
 }) {
   const [draft] = useState(() => observable<StoreDraft>({
@@ -28,11 +25,9 @@ export function StoreEditor({
     logoUrl: store?.logoUrl || "",
     coverUrl: store?.coverUrl || "",
     theme: store?.theme || "eyn-light",
+    storefrontConfig: store?.storefrontConfig || {},
   }));
-  return <div className="store-editor-preview">
-    <StoreEditorForm draft={draft} store={store} onSaved={onSaved} />
-    <StorePreview draft={draft} store={store} products={products} />
-  </div>;
+  return <StoreEditorForm draft={draft} store={store} onSaved={onSaved} />;
 }
 
 function StoreEditorForm({ draft, store, onSaved }: { draft: Observable<StoreDraft>; store?: Store; onSaved?: () => void }) {
@@ -48,9 +43,11 @@ function StoreEditorForm({ draft, store, onSaved }: { draft: Observable<StoreDra
         e.preventDefault();
         void save(
           async () => {
+            const { name, slug, description, currency, published } = form;
+            const settings = { name, slug, description, currency, published };
             const result = store
-              ? await storeApi.update(store.id, form)
-              : await storeApi.create(form);
+              ? await storeApi.update(store.id, settings)
+              : await storeApi.create(settings);
             if (!store) router.push(`/stores/${result.id}`);
           },
           store ? "Store updated" : "Your store is ready",
@@ -107,35 +104,6 @@ function StoreEditorForm({ draft, store, onSaved }: { draft: Observable<StoreDra
         <p className="field-help">
           Changing currency changes the label only. Existing prices are not
           converted.
-        </p>
-        <h2>Storefront appearance</h2>
-        <Field
-          label="Logo URL (HTTPS)"
-          type="url"
-          value={form.logoUrl || ""}
-          onChange={(v) => set("logoUrl", v)}
-          maxLength={2000}
-        />
-        <Field
-          label="Cover image URL (HTTPS)"
-          type="url"
-          value={form.coverUrl || ""}
-          onChange={(v) => set("coverUrl", v)}
-          maxLength={2000}
-        />
-        <label className="select-label">
-          Storefront theme
-          <select
-            value={form.theme}
-            onChange={(e) => set("theme", e.target.value)}
-          >
-            <option value="eyn-light">EYN Light</option>
-            <option value="eyn-dark">EYN Dark</option>
-          </select>
-        </label>
-        <p className="field-help">
-          Your storefront uses this theme independently of your merchant
-          workspace.
         </p>
         <div className="visibility">
           <div>

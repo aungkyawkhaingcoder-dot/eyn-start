@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import Link from "next/link";
 import { Button } from "@heroui/react";
 import { Search, X, ShoppingBag } from "lucide-react";
@@ -8,6 +8,8 @@ import { CartProvider, money } from "./CartProvider";
 import { CartPanel } from "./CartPanel";
 import { ProductCard, ProductImage, AddToCart } from "./ProductCard";
 import "./storefront.css";
+import { EditableCopy, type CopyKey } from "./EditableCopy";
+import { themeStyle } from "./design";
 
 function Collection({
   title,
@@ -16,7 +18,7 @@ function Collection({
   currency,
   open,
 }: {
-  title: string;
+  title: ReactNode;
   subtitle: string;
   products: Product[];
   currency: string;
@@ -95,7 +97,15 @@ function ProductDetail({
     </dialog>
   );
 }
-export function StorefrontView({ store, preview = false }: { store: Storefront; preview?: boolean }) {
+export function StorefrontView({
+  store,
+  preview = false,
+}: {
+  store: Storefront;
+  preview?: boolean;
+}) {
+  const config = store.storefrontConfig || {};
+  const copy = (name: CopyKey, fallback: string) => <EditableCopy name={name} value={config[name]} fallback={fallback} />;
   const [query, setQuery] = useState(""),
     [category, setCategory] = useState(""),
     [selected, select] = useState<Product | null>(null);
@@ -121,10 +131,12 @@ export function StorefrontView({ store, preview = false }: { store: Storefront; 
   );
   return (
     <CartProvider store={store} preview={preview}>
-      <div className="sf" data-store-theme={store.theme || "eyn-light"}>
-        <div className="sf-announcement">
-          A little discovery. Something you’ll love.
-        </div>
+      <div
+        className="sf"
+        data-store-theme={store.theme || "eyn-light"}
+        style={themeStyle(config, store.theme === "eyn-dark") as CSSProperties}
+      >
+        <div className="sf-announcement">{store.name}</div>
         <header className="sf-header">
           <Link className="sf-store-brand" href={`/shop/${store.slug}`}>
             {store.logoUrl ? (
@@ -144,41 +156,36 @@ export function StorefrontView({ store, preview = false }: { store: Storefront; 
           {!preview && <CartPanel store={store} />}
         </header>
         <main className="sf-main">
-          <section
-            className={`sf-hero ${store.coverUrl ? "sf-hero-image" : ""}`}
-          >
-            <div className="sf-hero-copy">
-              <span className="sf-overline">
-                WELCOME TO {store.name.toUpperCase()}
-              </span>
-              <h1>
-                Good finds.
-                <br />
-                <span>Made for you.</span>
-              </h1>
-              <p>
-                {store.description ||
-                  "Discover our collection. Find your next everyday favourite."}
-              </p>
-              <a className="sf-shop-link" href="#collection">
-                Explore the collection
-              </a>
-            </div>
-            {store.coverUrl ? (
-              <img
-                className="sf-cover"
-                src={store.coverUrl}
-                alt={`${store.name} collection`}
-                referrerPolicy="no-referrer"
-              />
-            ) : (
-              <div className="sf-hero-art" aria-hidden="true">
-                <div />
-                <div />
-                <span>{store.name.slice(0, 1)}</span>
+            <section
+              className={`sf-hero ${store.coverUrl ? "sf-hero-image" : ""}`}
+            >
+              <div className="sf-hero-copy">
+                <span className="sf-overline">
+                  WELCOME TO {store.name.toUpperCase()}
+                </span>
+                <h1>{copy("heroTitle", `Welcome to ${store.name}`)}</h1>
+                <p>
+                  {copy("heroText", store.description || "Browse our products and find what you need.")}
+                </p>
+                <a className="sf-shop-link" href="#collection">
+                  {copy("buttonLabel", "Explore products")}
+                </a>
               </div>
-            )}
-          </section>
+              {store.coverUrl ? (
+                <img
+                  className="sf-cover"
+                  src={store.coverUrl}
+                  alt={`${store.name} collection`}
+                  referrerPolicy="no-referrer"
+                />
+              ) : (
+                <div className="sf-hero-art" aria-hidden="true">
+                  <div />
+                  <div />
+                  <span>{store.name.slice(0, 1)}</span>
+                </div>
+              )}
+            </section>
           <div className="sf-promises">
             <span>
               <ShoppingBag size={18} />
@@ -187,25 +194,25 @@ export function StorefrontView({ store, preview = false }: { store: Storefront; 
             <span>Thoughtfully selected</span>
             <span>Your next favourite awaits</span>
           </div>
-          <Collection
-            title="Loved by our customers"
-            subtitle="BEST SELLERS"
-            products={best}
-            currency={store.currency}
-            open={select}
-          />
-          <Collection
-            title="The store’s picks"
-            subtitle="HANDPICKED FOR YOU"
-            products={featured}
-            currency={store.currency}
-            open={select}
-          />
+            <Collection
+              title={copy("bestTitle", "Best sellers")}
+              subtitle="BEST SELLERS"
+              products={best}
+              currency={store.currency}
+              open={select}
+            />
+            <Collection
+              title={copy("featuredTitle", "Featured products")}
+              subtitle="HANDPICKED FOR YOU"
+              products={featured}
+              currency={store.currency}
+              open={select}
+            />
           <section id="collection" className="sf-section">
             <div className="sf-section-title">
               <div>
                 <span className="sf-overline">FIND YOUR FAVOURITES</span>
-                <h2>The collection</h2>
+                <h2>{copy("collectionTitle", "Our products")}</h2>
               </div>
               <span>{filtered.length} products</span>
             </div>
@@ -277,18 +284,13 @@ export function StorefrontView({ store, preview = false }: { store: Storefront; 
               </div>
             )}
           </section>
-          <section className="sf-about">
-            <span className="sf-overline">A NOTE FROM THE STORE</span>
-            <h2>
-              A home for things
-              <br />
-              you’ll love.
-            </h2>
-            <p>
-              {store.description ||
-                `Welcome to ${store.name}. Thank you for supporting our store.`}
-            </p>
-          </section>
+            <section className="sf-about">
+              <span className="sf-overline">A NOTE FROM THE STORE</span>
+              <h2>{copy("aboutTitle", `About ${store.name}`)}</h2>
+              <p>
+                {copy("aboutText", store.description || `Welcome to ${store.name}. Thank you for supporting our store.`)}
+              </p>
+            </section>
         </main>
         <footer className="sf-footer">
           <strong>{store.name}</strong>

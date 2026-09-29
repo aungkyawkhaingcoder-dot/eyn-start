@@ -129,6 +129,7 @@ export async function publicStore(slug: string) {
       logoUrl: true,
       coverUrl: true,
       theme: true,
+      storefrontConfig: true,
       products: {
         where: { published: true, status: "ACTIVE" },
         orderBy: { createdAt: "desc" },

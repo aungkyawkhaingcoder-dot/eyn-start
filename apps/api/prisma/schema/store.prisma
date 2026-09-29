@@ -16,6 +16,7 @@ model Store {
   tags           Tag[]
   logoUrl        String         @default("") @db.VarChar(2000)
   coverUrl       String         @default("") @db.VarChar(2000)
+  storefrontConfig Json          @default("{}")
   theme          String         @default("eyn-light") @db.VarChar(30)
 
   @@index([ownerId])

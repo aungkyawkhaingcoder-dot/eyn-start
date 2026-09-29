@@ -1,4 +1,31 @@
+export type StorefrontConfig = Partial<
+  Record<
+    | "fontFamily"
+    | "radius"
+    | "formRadius"
+    | "heroTitle"
+    | "heroText"
+    | "buttonLabel"
+    | "collectionTitle"
+    | "featuredTitle"
+    | "bestTitle"
+    | "aboutTitle"
+    | "aboutText"
+    | "background"
+    | "surface"
+    | "text"
+    | "muted"
+    | "primary"
+    | "buttonText"
+    | "accent",
+    string
+  >
+> &
+  Partial<
+    Record<"showHero" | "showFeatured" | "showBest" | "showAbout", boolean>
+  >;
 export interface Store {
+  storefrontConfig?: StorefrontConfig;
   id: number;
   name: string;
   slug: string;
@@ -33,6 +60,7 @@ export type StoreDraft = Pick<
   | "logoUrl"
   | "coverUrl"
   | "theme"
+  | "storefrontConfig"
 >;
 export type ProductDraft = Omit<Product, "id" | "category" | "taggables"> & {
   categoryName?: string;
@@ -48,6 +76,7 @@ export type Storefront = Pick<
   | "logoUrl"
   | "coverUrl"
   | "theme"
+  | "storefrontConfig"
 > & { products: Product[]; bestSellerIds: number[] };
 export type CheckoutInput = {
   customerName: string;

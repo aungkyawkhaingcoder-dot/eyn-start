@@ -43,6 +43,7 @@ export function storeInput(value: unknown) {
     throw invalid("Unsupported currency.");
   if (typeof body.published !== "boolean") throw invalid("Invalid visibility.");
   return {
+    ...(body.storefrontConfig !== undefined ? { storefrontConfig: storefrontConfig(body.storefrontConfig) } : {}),
     name,
     slug,
     currency,
@@ -120,4 +121,27 @@ function tagNames(value: unknown): string[] {
   )
     throw invalid("Use up to 10 tags, each 1–40 characters.");
   return [...new Set(value.map((t) => t.trim().toLowerCase()))];
+}
+
+function storefrontConfig(value: unknown): Record<string, string | boolean> {
+  const body = object(value);
+  const result: Record<string, string | boolean> = {};
+  const copy: Record<string, number> = { heroTitle: 160, heroText: 500, buttonLabel: 60, collectionTitle: 100, featuredTitle: 100, bestTitle: 100, aboutTitle: 100, aboutText: 1000 };
+  const colors = ["background", "surface", "text", "muted", "primary", "buttonText", "accent"];
+  for (const [key, value] of Object.entries(body)) {
+    if (Object.hasOwn(copy, key)) result[key] = text(body, key, copy[key]!);
+    else if (["fontFamily", "radius", "formRadius"].includes(key)) {
+      const allowed = key === "fontFamily" ? ["system", "arial", "georgia"] : ["0", "4", "8", "12", "16"];
+      if (typeof value !== "string" || !allowed.includes(value)) throw invalid(`Invalid ${key}.`);
+      result[key] = value;
+    }
+    else if (colors.includes(key)) {
+      if (typeof value !== "string" || !/^#[0-9a-fA-F]{6}$/.test(value)) throw invalid(`Invalid ${key} color.`);
+      result[key] = value;
+    } else if (["showHero", "showFeatured", "showBest", "showAbout"].includes(key)) {
+      if (typeof value !== "boolean") throw invalid(`Invalid ${key}.`);
+      result[key] = value;
+    } else throw invalid(`Unknown storefront setting: ${key}.`);
+  }
+  return result;
 }
