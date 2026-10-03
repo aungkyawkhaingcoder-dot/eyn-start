@@ -5,7 +5,7 @@ interface CustomRequest extends Request{
 export  const getUserHandler = (req:CustomRequest,res:Response,next:NextFunction)=>{ 
     const userId = req.userId;
     res.status(200).json({
-        message: "All Users",
+        message: req.t("welcome"),
         currentUserId: userId
     })
 }

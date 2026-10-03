@@ -13,6 +13,11 @@ import storeRouter from "./routes/v1/stores";
 import { getPublicStore } from "./controller/storeController";
 import { checkout } from "./controller/orderController";
 import { rateLimit } from "express-rate-limit";
+import i18next from "i18next";
+import Backend from "i18next-fs-backend";
+import i18nextMiddleware from "i18next-http-middleware";
+import path from "path";
+import routerLanguage from "./routes/v1/profileRoute";
 const app: Express = express();
 const serverConfig = readServerConfig();
 app.set("trust proxy", serverConfig.trustProxy);
@@ -38,15 +43,31 @@ app.use(cors(corsOptions));
 app.use(helmet());
 app.use(compression({}));
 app.use(limiter);
+i18next.use(Backend).use(i18nextMiddleware.LanguageDetector).init({
+    backend: {
+        loadPath: path.join(process.cwd(), "src/locales", "{{lng}}", "{{ns}}.json"),
+    },
+    detection: {
+        order: ["querystring", "cookie", ],
+        caches: ["cookie"],
+    },
+    fallbackLng: "en",
+    preload: ["en","mm", "es", "fr", "de", "zh"],
+    ns: ["translation"],
+    defaultNS: "translation",
+});
+app.use(i18nextMiddleware.handle(i18next));
 
 // Liveness only: does not claim that PostgreSQL/Redis are ready.
 app.get("/healthz", (_req, res) => { res.status(200).json({ status: "ok" }); });
 
 // Routes
+app.use('/api/v1/profile',routerLanguage);
 app.get('/api/v1/storefront/:slug', getPublicStore);
 app.post('/api/v1/storefront/:slug/orders', rateLimit({ windowMs: 60000, limit: 10, standardHeaders: true, legacyHeaders: false }), checkout);
 app.use('/api/v1/stores', authMiddleware, storeRouter);
 app.use('/api/v1', authRouter)
+
 app.use('/api/v1/admin', authMiddleware, userRouter)
 
 app.use((error: any, req: Request, res: Response, next: NextFunction) => {
