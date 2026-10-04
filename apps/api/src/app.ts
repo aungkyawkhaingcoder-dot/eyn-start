@@ -18,6 +18,7 @@ import Backend from "i18next-fs-backend";
 import i18nextMiddleware from "i18next-http-middleware";
 import path from "path";
 import routerLanguage from "./routes/v1/profileRoute";
+import { authorise } from "./middleware/authorise";
 const app: Express = express();
 const serverConfig = readServerConfig();
 app.set("trust proxy", serverConfig.trustProxy);
@@ -68,7 +69,7 @@ app.post('/api/v1/storefront/:slug/orders', rateLimit({ windowMs: 60000, limit: 
 app.use('/api/v1/stores', authMiddleware, storeRouter);
 app.use('/api/v1', authRouter)
 
-app.use('/api/v1/admin', authMiddleware, userRouter)
+app.use('/api/v1/admin', authMiddleware, authorise(true, 'ADMIN'), userRouter)
 
 app.use((error: any, req: Request, res: Response, next: NextFunction) => {
     const status = error.status || 500;
