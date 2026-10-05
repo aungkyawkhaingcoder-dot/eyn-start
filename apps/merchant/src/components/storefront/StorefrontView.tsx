@@ -15,7 +15,9 @@ import { CartPanel } from "./CartPanel";
 import { ProductCard, ProductImage, AddToCart } from "./ProductCard";
 import "./storefront.css";
 import { EditableCopy, type CopyKey } from "./EditableCopy";
+import { designStyle } from "./styles";
 import { themeStyle } from "./design";
+import { loadStorefrontFont } from "./fonts";
 
 function Collection({
   title,
@@ -111,6 +113,11 @@ export function StorefrontView({
   preview?: boolean;
 }) {
   const config = store.storefrontConfig || {};
+  const fontRoot = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (fontRoot.current)
+      loadStorefrontFont(fontRoot.current.ownerDocument, config.fontFamily);
+  }, [config.fontFamily]);
   const [failedCover, setFailedCover] = useState<string | null>(null);
   const [failedLogo, setFailedLogo] = useState<string | null>(null);
   const hasCover = !!store.coverUrl && failedCover !== store.coverUrl;
@@ -140,10 +147,17 @@ export function StorefrontView({
   const featured = store.products.filter((p) =>
     p.taggables?.some((t) => t.tag.name === "featured"),
   );
+  const spotlight =
+    featured[0] ||
+    best[0] ||
+    store.products.find((product) => product.inventory > 0) ||
+    store.products[0];
   return (
     <CartProvider store={store} preview={preview}>
       <div
+        ref={fontRoot}
         className="sf"
+        data-design={designStyle(config.designStyle)}
         data-store-theme={store.theme || "eyn-light"}
         style={themeStyle(config, store.theme === "eyn-dark") as CSSProperties}
       >
@@ -169,18 +183,18 @@ export function StorefrontView({
         </header>
         <main className="sf-main">
           <section
-            className={`sf-hero ${hasCover ? "sf-hero-image" : "sf-hero-placeholder"}`}
+            className={`sf-hero ${hasCover ? "sf-hero-image" : "sf-hero-placeholder"} ${!hasCover && spotlight ? "sf-hero-with-product" : ""}`}
           >
             <div className="sf-hero-copy">
               <span className="sf-overline">
                 WELCOME TO {store.name.toUpperCase()}
               </span>
-              <h1>{copy("heroTitle", `Welcome to ${store.name}`)}</h1>
+              <h1>{copy("heroTitle", "Find your next favourite.")}</h1>
               <p>
                 {copy(
                   "heroText",
                   store.description ||
-                    "Browse our products and find what you need.",
+                    "Explore the collection. Find the details you love, all in one place.",
                 )}
               </p>
               <a className="sf-shop-link" href="#collection">
@@ -195,16 +209,27 @@ export function StorefrontView({
                 alt={`${store.name} collection`}
                 referrerPolicy="no-referrer"
               />
+            ) : spotlight ? (
+              <button
+                className="sf-spotlight"
+                data-image={Boolean(spotlight.imageUrl)}
+                onClick={() => select(spotlight)}
+                aria-label={`Discover ${spotlight.name}`}
+              >
+                <span className="sf-spotlight-top">
+                  <span>{spotlight.category?.name || "IN THE SPOTLIGHT"}</span>
+                  <span>Discover</span>
+                </span>
+                <span className="sf-spotlight-image">
+                  <ProductImage product={spotlight} />
+                </span>
+                <span className="sf-spotlight-caption">
+                  <strong>{spotlight.name}</strong>
+                  <span>{money(spotlight.price, store.currency)}</span>
+                </span>
+              </button>
             ) : null}
           </section>
-          <div className="sf-promises">
-            <span>
-              <ShoppingBag size={18} />
-              Shop directly with {store.name}
-            </span>
-            <span>Thoughtfully selected</span>
-            <span>Your next favourite awaits</span>
-          </div>
           <Collection
             title={copy("bestTitle", "Best sellers")}
             subtitle="BEST SELLERS"

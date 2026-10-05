@@ -9,6 +9,8 @@ import toast from "react-hot-toast";
 import type { Product, Store, StoreDraft } from "../types/store";
 import { CopyEditorContext, copyLimits } from "./storefront/EditableCopy";
 import { StorefrontView } from "./storefront/StorefrontView";
+import { designStyle } from "./storefront/styles";
+import { loadStorefrontFont } from "./storefront/fonts";
 import { themeStyle, colorKeys } from "./storefront/design";
 import "./store-preview.css";
 
@@ -105,7 +107,9 @@ function PreviewContent({ draft, store, products, editable }: Props) {
       "themeChroma",
       "themeLightness",
       "themeBase",
+      "themeVibrant",
       "fontFamily",
+      "designStyle",
       "radius",
       "formRadius",
     ])
@@ -119,6 +123,15 @@ function PreviewContent({ draft, store, products, editable }: Props) {
     const apply = () => {
       frame = null;
       const node = appearanceRoot.current?.querySelector<HTMLElement>(".sf");
+      if (node)
+        node.dataset.design = designStyle(
+          draft.storefrontConfig.designStyle.peek(),
+        );
+      if (node)
+        loadStorefrontFont(
+          node.ownerDocument,
+          draft.storefrontConfig.fontFamily.peek(),
+        );
       if (node)
         for (const [key, value] of Object.entries(
           themeStyle(

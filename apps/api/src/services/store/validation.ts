@@ -135,15 +135,19 @@ function storefrontConfig(value: unknown): Record<string, string | boolean> {
       if (typeof value !== "string" || !value.trim() || !Number.isFinite(Number(value)) || Number(value) < 0 || Number(value) > max) throw invalid(`Invalid ${key}.`);
       result[key] = String(Number(value));
     }
+    else if (key === "designStyle") {
+      if (typeof value !== "string" || !["minimalism", "bento", "glassmorphism", "neumorphism", "skeuomorphism", "maximalism", "claymorphism", "flat", "spatial"].includes(value)) throw invalid("Invalid storefront design.");
+      result[key] = ["minimalism", "bento", "skeuomorphism", "maximalism"].includes(value) ? "flat" : value;
+    }
     else if (["fontFamily", "radius", "formRadius"].includes(key)) {
-      const allowed = key === "fontFamily" ? ["system", "arial", "georgia"] : ["0", "4", "8", "12", "16"];
+      const allowed = key === "fontFamily" ? ["system", "arial", "georgia", "inter", "figtree", "hanken", "geist", "dm-sans", "public-sans"] : ["0", "4", "8", "12", "16"];
       if (typeof value !== "string" || !allowed.includes(value)) throw invalid(`Invalid ${key}.`);
       result[key] = value;
     }
     else if (colors.includes(key)) {
       if (typeof value !== "string" || !/^#[0-9a-fA-F]{6}$/.test(value)) throw invalid(`Invalid ${key} color.`);
       result[key] = value;
-    } else if (["showHero", "showFeatured", "showBest", "showAbout"].includes(key)) {
+    } else if (["themeVibrant", "showHero", "showFeatured", "showBest", "showAbout"].includes(key)) {
       if (typeof value !== "boolean") throw invalid(`Invalid ${key}.`);
       result[key] = value;
     } else throw invalid(`Unknown storefront setting: ${key}.`);

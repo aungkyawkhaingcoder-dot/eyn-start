@@ -78,3 +78,101 @@ test("empty catalog omits filters and fabricated merchandising", async ({
     page.getByRole("heading", { name: "Best sellers", exact: true }),
   ).toHaveCount(0);
 });
+
+for (const width of [390, 1440]) {
+  test(`design styles remain shoppable at ${width}px in light and dark`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 900 });
+    const styles = [
+      "glassmorphism",
+      "neumorphism",
+      "claymorphism",
+      "flat",
+      "spatial",
+    ];
+    let style = "flat",
+      theme = "eyn-light";
+    await page.route("**/api/v1/storefront/designs", (route) =>
+      route.fulfill({
+        json: {
+          id: 903,
+          name: "Everyday Studio",
+          slug: "designs",
+          description: "Considered essentials for your everyday.",
+          currency: "MMK",
+          theme,
+          storefrontConfig: { designStyle: style },
+          bestSellerIds: [],
+          products: Array.from({ length: 4 }, (_, i) => ({
+            id: i + 1,
+            name: [
+              "Everyday carry",
+              "Ceramic cup",
+              "Linen essential",
+              "Desk companion",
+            ][i],
+            description: "A useful everyday favourite",
+            price: "18000",
+            inventory: 5,
+            imageUrl: "",
+            category: { id: 1, name: "Everyday" },
+            taggables: [],
+          })),
+        },
+      }),
+    );
+    for (theme of ["eyn-light", "eyn-dark"])
+      for (style of styles) {
+        await page.goto("/shop/designs");
+        await expect(page.locator(".sf")).toHaveAttribute("data-design", style);
+        await expect(page.locator(".sf-product")).toHaveCount(4);
+        if (style === "maximalism")
+          await expect(page.locator(".sf-product").first()).toHaveCSS(
+            "border-top-width",
+            "2px",
+          );
+        expect(
+          await page.evaluate(
+            () => document.documentElement.scrollWidth <= innerWidth,
+          ),
+        ).toBe(true);
+        await page
+          .getByRole("button", { name: "Discover Everyday carry", exact: true })
+          .click();
+        await expect(page.getByRole("dialog")).toBeVisible();
+        await page.keyboard.press("Escape");
+        await page
+          .getByRole("searchbox", { name: "Search products" })
+          .fill("Ceramic");
+        await expect(page.locator(".sf-product")).toHaveCount(1);
+        await page.getByRole("searchbox", { name: "Search products" }).fill("");
+        await page
+          .locator(".sf-product")
+          .first()
+          .getByRole("button", { name: "Add to cart", exact: true })
+          .click();
+        await page
+          .getByRole("button", { name: "Open shopping bag", exact: true })
+          .click();
+        await expect(
+          page.getByRole("button", {
+            name: "Continue to checkout",
+            exact: true,
+          }),
+        ).toBeEnabled();
+        await page
+          .getByRole("button", { name: "Remove Everyday carry", exact: true })
+          .click();
+        await page.keyboard.press("Escape");
+        if (
+          theme === "eyn-light" &&
+          ["flat", "glassmorphism", "claymorphism"].includes(style)
+        )
+          await page.screenshot({
+            path: `/tmp/eyn-design-${style}-${width}.png`,
+            fullPage: true,
+          });
+      }
+  });
+}

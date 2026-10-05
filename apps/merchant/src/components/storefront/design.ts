@@ -1,3 +1,4 @@
+import { fontFamily } from "./fonts";
 import type { StorefrontConfig } from "../../types/store";
 export const colorKeys = [
   "background",
@@ -98,11 +99,11 @@ export function palette(base: string, mode: string) {
 export function themeStyle(config: StorefrontConfig, dark: boolean) {
   const c = { ...defaultColors(dark), ...config };
   return {
-    "--sf-font": config.fontFamily === "georgia" ? "Georgia, serif" : config.fontFamily === "arial" ? "Arial, Helvetica, sans-serif" : "system-ui, sans-serif",
+    "--sf-font": fontFamily(config.fontFamily),
     "--sf-radius": `${config.radius || "8"}px`,
     "--sf-form-radius": `${config.formRadius || "8"}px`,
-    "--sf-line": `color-mix(in oklab, ${c.text} ${dark ? "18%" : "12%"}, ${c.background})`,
-    "--sf-soft": `color-mix(in oklab, ${c.primary} ${dark ? "12%" : "8%"}, ${c.surface})`,
+    "--sf-line": config.themeHue !== undefined ? `oklch(${dark ? ".28" : ".92"} ${config.themeBase || "0"} ${config.themeHue})` : `color-mix(in oklab, ${c.text} ${dark ? "18%" : "8%"}, ${c.background})`,
+    "--sf-soft": `color-mix(in oklab, ${c.primary} ${dark ? "12%" : "5%"}, ${c.surface})`,
     "--sf-bg": c.background,
     "--sf-panel": c.surface,
     "--sf-ink": c.text,

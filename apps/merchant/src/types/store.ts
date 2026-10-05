@@ -4,6 +4,7 @@ export type StorefrontConfig = Partial<
     | "themeChroma"
     | "themeLightness"
     | "themeBase"
+    | "designStyle"
     | "fontFamily"
     | "radius"
     | "formRadius"
@@ -26,7 +27,7 @@ export type StorefrontConfig = Partial<
   >
 > &
   Partial<
-    Record<"showHero" | "showFeatured" | "showBest" | "showAbout", boolean>
+    Record<"themeVibrant" | "showHero" | "showFeatured" | "showBest" | "showAbout", boolean>
   >;
 export interface Store {
   storefrontConfig?: StorefrontConfig;

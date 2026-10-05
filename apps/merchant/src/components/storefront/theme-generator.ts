@@ -7,18 +7,26 @@ export type ThemeSeed = {
   lightness: number;
   base: number;
 };
+// Color seeds from HeroUI's theme builder. Typography/radii stay independently editable.
 export const themePresets = {
-  EYN: { hue: 80, chroma: 0.085, lightness: 0.74, base: 0.006 },
-  Lavender: {
-    hue: 281.6396234331059,
-    chroma: 0.11949973822037381,
-    lightness: 0.7712331152153334,
-    base: 0.016,
-  },
-  Mint: { hue: 155, chroma: 0.12, lightness: 0.82, base: 0.012 },
-  Ocean: { hue: 250, chroma: 0.15, lightness: 0.65, base: 0.01 },
-  Rose: { hue: 15, chroma: 0.16, lightness: 0.72, base: 0.012 },
+  Default: { hue: 253.83, chroma: 0.195, lightness: 0.6204, base: 0.0015 },
+  Sky: { hue: 225, chroma: 0.16, lightness: 0.78, base: 0.0015 },
+  Lavender: { hue: 305, chroma: 0.13, lightness: 0.77, base: 0.0015 },
+  Mint: { hue: 155, chroma: 0.12, lightness: 0.82, base: 0.0015 },
+  Netflix: { hue: 27.99, chroma: 0.2349, lightness: 0.5814, base: 0 },
+  Uber: { hue: 0, chroma: 0, lightness: 0, base: 0 },
+  Spotify: { hue: 148.67, chroma: 0.2124, lightness: 0.7697, base: 0.002 },
+  Coinbase: { hue: 262.87, chroma: 0.2628, lightness: 0.5282, base: 0.002 },
+  Airbnb: { hue: 17.07, chroma: 0.2309, lightness: 0.6579, base: 0 },
+  Discord: { hue: 273.85, chroma: 0.2091, lightness: 0.5774, base: 0.01 },
+  Rabbit: { hue: 36.66, chroma: 0.2232, lightness: 0.6678, base: 0.01 },
 } satisfies Record<string, ThemeSeed>;
+export const eynThemeSeed: ThemeSeed = {
+  hue: 80,
+  chroma: 0.085,
+  lightness: 0.74,
+  base: 0.006,
+};
 
 // OKLab -> linear sRGB. Reduce chroma, preserving hue/lightness, when out of gamut.
 export function oklchHex(lightness: number, chroma: number, hue: number) {
@@ -82,30 +90,51 @@ export function seedFromConfig(config: StorefrontConfig): ThemeSeed {
     hue: Number(config.themeHue ?? fallback.hue),
     chroma: Number(config.themeChroma ?? fallback.chroma),
     lightness: Number(config.themeLightness ?? fallback.lightness),
-    base: Number(config.themeBase ?? 0.006),
+    base: Math.min(0.02, Math.max(0, Number(config.themeBase ?? 0.0015))),
   };
 }
 export function generatedTheme(
   seed: ThemeSeed,
   dark: boolean,
+  vibrant = false,
 ): StorefrontConfig {
   const { hue, chroma, lightness, base } = seed;
-  const background = oklchHex(dark ? 0.145 : 0.985, dark ? base : base * 0.15, hue),
-    surface = oklchHex(dark ? 0.205 : 0.993, dark ? base : base * 0.04, hue);
-  const text = oklchHex(dark ? 0.97 : 0.18, Math.min(base, 0.01), hue);
-  let muted = oklchHex(dark ? 0.72 : 0.46, base, hue);
-  if (Math.min(contrast(muted, background), contrast(muted, surface)) < 4.5)
-    muted = text;
-  const primary = oklchHex(lightness, chroma, hue);
-  let accent = primary;
+  const background = oklchHex(dark ? 0.12 : 0.9702, base, hue);
+  const surface = oklchHex(
+    dark ? 0.2103 : 1,
+    dark ? base * 2 : base * 0.5,
+    hue,
+  );
+  const text = oklchHex(dark ? 0.9911 : 0.2103, base, hue);
+  const muted = oklchHex(dark ? 0.705 : 0.5517, base * 2, hue);
+  // Uber's monochrome accent adapts to dark mode like HeroUI's adaptive colors.
+  const adaptiveLightness =
+    dark && chroma === 0 && lightness === 0 ? 0.9911 : lightness;
+  const primary = oklchHex(adaptiveLightness, chroma, hue);
+  // Soft foreground follows the accent: vibrant retains more color.
+  const weight = vibrant ? 0.92 : dark ? 0.8 : 0.7;
+  const accentSeed = hexSeed(primary),
+    textSeed = hexSeed(text);
+  const a =
+    weight * accentSeed.chroma * Math.cos((accentSeed.hue * Math.PI) / 180) +
+    (1 - weight) * textSeed.chroma * Math.cos((textSeed.hue * Math.PI) / 180);
+  const b =
+    weight * accentSeed.chroma * Math.sin((accentSeed.hue * Math.PI) / 180) +
+    (1 - weight) * textSeed.chroma * Math.sin((textSeed.hue * Math.PI) / 180);
+  let accent = oklchHex(
+    weight * accentSeed.lightness + (1 - weight) * textSeed.lightness,
+    Math.hypot(a, b),
+    ((Math.atan2(b, a) * 180) / Math.PI + 360) % 360,
+  );
   for (
     let i = 1;
+    !vibrant &&
     i <= 30 &&
     Math.min(contrast(accent, background), contrast(accent, surface)) < 4.5;
     i++
   ) {
     accent = oklchHex(
-      lightness + (((dark ? 0.96 : 0.2) - lightness) * i) / 30,
+      adaptiveLightness + (((dark ? 0.96 : 0.2) - adaptiveLightness) * i) / 30,
       chroma,
       hue,
     );
@@ -121,6 +150,7 @@ export function generatedTheme(
       contrast(primary, "#ffffff") >= contrast(primary, "#080808")
         ? "#ffffff"
         : "#080808",
+    themeVibrant: vibrant,
     themeHue: String(hue),
     themeChroma: String(chroma),
     themeLightness: String(lightness),

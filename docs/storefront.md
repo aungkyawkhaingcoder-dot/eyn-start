@@ -36,7 +36,7 @@ No payment is collected or marked paid. Totals cover products only. Checkout exp
 
 ## Appearance and future extensions
 
-Store settings support HTTPS logo/cover URLs and EYN light/dark presets, independently of the merchant dashboard theme. Scoped CSS variables drive colors; buttons use 8px radius. Product images and logos preserve their aspect ratios. The default preset is EYN light. A full theme editor with draft/preview/publish, custom colors/fonts and AI suggestions is deferred. File uploads and product variants are also not provided by the current schema/UI.
+Store settings support HTTPS logo/cover URLs and EYN light/dark presets, independently of the merchant dashboard theme. Scoped CSS variables drive colors; buttons use 8px radius. Product images and logos preserve their aspect ratios. The default preset is EYN light. The storefront editor supports local drafts, live preview, custom colors, fonts, radius and saved design styles. AI suggestions are deferred. File uploads and product variants are also not provided by the current schema/UI.
 
 The existing Post schema remains unchanged for a later blog feature. Before adding public blog routes, add store ownership and publication controls; do not expose historical global posts automatically.
 
@@ -71,9 +71,20 @@ and section drag-and-drop are not included in this version.
 
 The storefront editor uses a compact HeroUI control strip. Accent hue, chroma and
 lightness generate an OKLCH-based palette; Base controls the tint of neutral
-surfaces (not their brightness). Light/dark mode is separate. Lavender matches
-the supplied HeroUI reference parameters; EYN, Mint, Ocean and Rose are local
-presets, not imported HeroUI templates. Font and radius settings remain independent.
+surfaces (not their brightness), over HeroUI's 0–0.02 chroma range. The Accent
+track reflects the selected lightness/chroma instead of using a fixed pastel ramp.
+Light/dark mode is separate. The Theme popover provides Default, Sky, Lavender,
+Mint, Netflix, Uber, Spotify, Coinbase, Airbnb, Discord and Rabbit color seeds
+from HeroUI's public theme builder. These are color presets, not template imports;
+font and radius settings remain independent. The original supplied custom
+Lavender URL remains a valid custom seed, while the named Lavender preset uses
+HeroUI's built-in values.
+
+Vibrant palette changes the soft foreground mix to preserve more accent color,
+with less contrast; its boolean is saved in storefrontConfig. Random theme (or T
+while the theme popover is open) picks a fresh seed. The shortcut does not run
+inside text inputs or editable copy. Reset colors restores the EYN seed and
+turns Vibrant off.
 The older logo/harmony palette controls are on hold; logo and cover URLs remain editable.
 
 Changes update canvas CSS variables without rerendering the product tree and are
@@ -82,3 +93,18 @@ behavior are retained. Colors and the four bounded numeric-string seed fields
 are stored in the existing storefrontConfig JSON; no migration is needed.
 Reset colors restores the EYN palette in the selected mode, preserving copy,
 logo, font and radii. It does not publish until Apply is pressed.
+
+
+### Storefront design styles
+
+The editor offers Glassmorphism, Neumorphism, Claymorphism, Flat Design (default)
+and Spatial UI. Each inherits the store's color, font and radius settings.
+Minimalism, Bento Grid, Skeuomorphism and Maximalism are retired: existing saved
+values render as Flat Design and normalize to `flat` on the next save.
+No database migration is required.
+
+Design selection updates the canvas without rebuilding the product tree and
+uses the existing draft/discard/apply workflow. The hero uses the store cover
+or a real product spotlight. Mobile layouts simplify depth effects; reduced
+motion is honored. Filtering, product details, cart and unpaid checkout remain
+shared across designs.
