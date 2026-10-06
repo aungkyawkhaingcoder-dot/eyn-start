@@ -1,0 +1,11 @@
+model StoreDomain {
+ id Int @id @default(autoincrement())
+ storeId Int
+ store Store @relation(fields:[storeId], references:[id], onDelete:Cascade)
+ hostname String @unique @db.VarChar(253)
+ verificationToken String @db.VarChar(80)
+ verifiedAt DateTime?
+ expiresAt DateTime
+ createdAt DateTime @default(now())
+ @@index([storeId])
+}

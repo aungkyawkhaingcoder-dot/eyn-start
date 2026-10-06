@@ -6,8 +6,10 @@ import type {
   ProductDraft,
   Storefront,
   StoreOrder,
+  StoreDashboard,
 } from "../types/store";
 export const storeApi = {
+  dashboard: async (id:number) => (await api.get<StoreDashboard>(`/api/v1/stores/${id}/dashboard`)).data,
   orders: async (id: number, page: number) =>
     (
       await api.get<StoreOrder[]>(`/api/v1/stores/${id}/orders`, {

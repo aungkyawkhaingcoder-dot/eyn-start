@@ -1,4 +1,5 @@
 "use client";
+import { MerchantWelcome } from "./MerchantOnboarding";
 import Link from "next/link";
 import { Button, Card, Chip } from "@heroui/react";
 import {
@@ -18,6 +19,7 @@ export function StoreList({ cacheScope }: { cacheScope: string }) {
   if (stores.error)
     return <Failure error={stores.error} retry={stores.refresh} />;
   const data = stores.data || [];
+  if (!data.length) return <MerchantWelcome />;
   const published = data.filter((s) => s.published).length;
   return (
     <>

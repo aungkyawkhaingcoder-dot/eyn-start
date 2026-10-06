@@ -1,3 +1,4 @@
+import { resolve as resolveDomain } from "./ControllerHandler/domainHandlers";
 import express, { NextFunction, Request, Response, Express } from "express";
 import helmet from "helmet";
 import compression from "compression";
@@ -65,6 +66,7 @@ app.get("/healthz", (_req, res) => { res.status(200).json({ status: "ok" }); });
 
 // Routes
 app.use('/api/v1/profile',routerLanguage);
+app.get('/api/v1/storefront-domains/resolve', resolveDomain);
 app.get('/api/v1/storefront/:slug', getPublicStore);
 app.post('/api/v1/storefront/:slug/orders', rateLimit({ windowMs: 60000, limit: 10, standardHeaders: true, legacyHeaders: false }), checkoutSession, checkout);
 app.use('/api/v1/stores', authMiddleware, storeRouter);

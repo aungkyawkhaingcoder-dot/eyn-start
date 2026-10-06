@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import { Button } from "@heroui/react";
 import { Minus, Plus, ShoppingBag, Trash2, X } from "lucide-react";
 import { useSelector } from "@legendapp/state/react";
@@ -26,28 +26,16 @@ export function CartTotal({ store }: { store: Storefront }) {
     <strong aria-live="polite">{money(total / 100, store.currency)}</strong>
   );
 }
+const SummaryLine = memo(function SummaryLine({id,product,currency}: {id:string; product?:Product; currency:string}) {
+ const cart = useCart();
+ const quantity = useSelector(cart.quantities[id]) || 0;
+ return <li><span>{quantity} × {product?.name || "Unavailable product"}</span><strong>{product ? money(cents(product.price) * quantity / 100, currency) : "—"}</strong></li>;
+});
 export function CartSummary({ store }: { store: Storefront }) {
   const cart = useCart();
-  const items = useSelector(cart.quantities);
-  return (
-    <ul className="sf-order-summary">
-      {Object.entries(items).map(([id, quantity]) => {
-        const product = store.products.find((p) => p.id === Number(id));
-        return (
-          <li key={id}>
-            <span>
-              {quantity} × {product?.name || "Unavailable product"}
-            </span>
-            <strong>
-              {product
-                ? money((cents(product.price) * quantity) / 100, store.currency)
-                : "—"}
-            </strong>
-          </li>
-        );
-      })}
-    </ul>
-  );
+  // A quantity edit updates its row; only additions/removals update this list.
+  const ids = useSelector(() => Object.keys(cart.quantities.get()).join(","));
+  return <ul className="sf-order-summary">{(ids ? ids.split(",") : []).map(id => <SummaryLine key={id} id={id} product={store.products.find(p=>p.id===Number(id))} currency={store.currency} />)}</ul>;
 }
 function CartLine({
   product,

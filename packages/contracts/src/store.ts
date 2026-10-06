@@ -81,3 +81,11 @@ export type StoreOrder = OrderReceipt & {
     unitPrice: string;
   }[];
 };
+
+export type StoreDashboard = {
+ totalOrders:number;
+ pendingOrders:number;
+ completedOrders:number;
+ completedValue:Array<{currency:string;amount:string}>;
+ recentOrders:Array<OrderReceipt & {id:number}>;
+};

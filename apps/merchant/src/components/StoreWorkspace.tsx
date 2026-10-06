@@ -1,4 +1,6 @@
 "use client";
+import { MerchantDashboard } from "./MerchantDashboard";
+import { StoreSetup } from "./MerchantOnboarding";
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -128,40 +130,8 @@ export function StoreWorkspace({
               <strong>{items.reduce((n, p) => n + p.inventory, 0)}</strong>
             </Card>
           </div>
-          <Card className="checklist">
-            <h2>Bring your store to life</h2>
-            {[
-              {
-                done: true,
-                label: "Create your store",
-                description: "Your business has a new home.",
-                href: `/stores/${id}/settings`,
-              },
-              {
-                done: items.length > 0,
-                label: "Add your first product",
-                description: "Start with something your customers will love.",
-                href: `/stores/${id}/products`,
-              },
-              {
-                done: s.published,
-                label: "Open your storefront",
-                description: "Publish when you are ready to share.",
-                href: `/stores/${id}/settings`,
-              },
-            ].map((item, i) => (
-              <Link href={item.href} key={item.label}>
-                <span className={item.done ? "complete" : ""}>
-                  {item.done ? "✓" : i + 1}
-                </span>
-                <div>
-                  <strong>{item.label}</strong>
-                  <p>{item.description}</p>
-                </div>
-                <ArrowUpRight size={18} />
-              </Link>
-            ))}
-          </Card>
+          <StoreSetup store={s} products={items} />
+          <MerchantDashboard id={id} cacheScope={cacheScope} />
         </>
       )}
     </>

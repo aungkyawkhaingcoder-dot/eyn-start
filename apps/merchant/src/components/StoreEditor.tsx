@@ -1,6 +1,6 @@
 "use client";
 import { Save, Plus, X } from "lucide-react";
-import { useState } from "react";
+import { useState, type ComponentProps } from "react";
 import { observable, type Observable } from "@legendapp/state";
 import { useSelector } from "@legendapp/state/react";
 import { useRouter } from "next/navigation";
@@ -33,9 +33,6 @@ export function StoreEditor({
 function StoreEditorForm({ draft, store, onSaved }: { draft: Observable<StoreDraft>; store?: Store; onSaved?: () => void }) {
   const router = useRouter();
   const { loading, save } = useSaveAction();
-  const form = useSelector(() => draft.get());
-  const set = (key: keyof StoreDraft, value: string | boolean) =>
-    draft.assign({ [key]: value });
   return (
     <form
       className="editor"
@@ -43,7 +40,7 @@ function StoreEditorForm({ draft, store, onSaved }: { draft: Observable<StoreDra
         e.preventDefault();
         void save(
           async () => {
-            const { name, slug, description, currency, published } = form;
+            const { name, slug, description, currency, published } = draft.peek();
             const settings = { name, slug, description, currency, published };
             const result = store
               ? await storeApi.update(store.id, settings)
@@ -64,43 +61,12 @@ function StoreEditorForm({ draft, store, onSaved }: { draft: Observable<StoreDra
           </div>
         </div>
         <div className="form-grid">
-          <Field
-            label="Store name"
-            value={form.name}
-            onChange={(v) => set("name", v)}
-            required
-            maxLength={80}
-          />
-          <Field
-            label="Store URL"
-            value={form.slug}
-            onChange={(v) => set("slug", v.toLowerCase())}
-            required
-            maxLength={60}
-          />
+          <DraftField draft={draft} name="name" label="Store name" required maxLength={80} />
+          <DraftField draft={draft} name="slug" label="Store URL" required maxLength={60} />
         </div>
-        <p className="field-help">
-          Your storefront: /shop/{form.slug || "your-store"} · letters, numbers
-          and hyphens
-        </p>
-        <Field
-          area
-          label="About your store"
-          value={form.description}
-          onChange={(v) => set("description", v)}
-          maxLength={1000}
-        />
-        <label className="select-label">
-          Currency
-          <select
-            value={form.currency}
-            onChange={(e) => set("currency", e.target.value)}
-          >
-            {["MMK", "USD", "THB"].map((c) => (
-              <option key={c}>{c}</option>
-            ))}
-          </select>
-        </label>
+        <StoreUrlHint draft={draft} />
+        <DraftField draft={draft} name="description" label="About your store" area maxLength={1000} />
+        <CurrencyField draft={draft} />
         <p className="field-help">
           Changing currency changes the label only. Existing prices are not
           converted.
@@ -110,19 +76,7 @@ function StoreEditorForm({ draft, store, onSaved }: { draft: Observable<StoreDra
             <h3>Publish your storefront</h3>
             <p>Let visitors browse your published products.</p>
           </div>
-          <Switch
-            className="eyn-publish-switch"
-            aria-label="Publish store"
-            isSelected={form.published}
-            onChange={(v) => set("published", v)}
-          >
-            <Switch.Content>
-              <Switch.Control>
-                <Switch.Thumb />
-              </Switch.Control>
-              <span className="eyn-switch-status" aria-hidden="true">{form.published ? "On" : "Off"}</span>
-            </Switch.Content>
-          </Switch>
+          <PublicationField draft={draft} />
         </div>
         <div className="form-actions">
           <Button
@@ -149,4 +103,34 @@ function StoreEditorForm({ draft, store, onSaved }: { draft: Observable<StoreDra
       </fieldset>
     </form>
   );
+}
+
+// Each input owns its subscription; saving reads a fresh snapshot only on submit.
+function DraftField({draft, name, ...props}: Omit<ComponentProps<typeof Field>, "value" | "onChange"> & {draft: Observable<StoreDraft>; name: "name" | "slug" | "description"}) {
+ const value = useSelector(draft[name]);
+ return <Field {...props} value={value} onChange={value => draft[name].set(name === "slug" ? value.toLowerCase() : value)} />;
+}
+function StoreUrlHint({draft}: {draft: Observable<StoreDraft>}) {
+ const slug = useSelector(draft.slug);
+ return <p className="field-help">Your storefront: /shop/{slug || "your-store"} · letters, numbers and hyphens</p>;
+}
+function CurrencyField({draft}: {draft: Observable<StoreDraft>}) {
+ const currency = useSelector(draft.currency);
+ return <label className="select-label">Currency<select value={currency} onChange={e => draft.currency.set(e.target.value)}>{["MMK", "USD", "THB"].map(c => <option key={c}>{c}</option>)}</select></label>;
+}
+function PublicationField({draft}: {draft: Observable<StoreDraft>}) {
+ const published = useSelector(draft.published);
+ return (          <Switch
+            className="eyn-publish-switch"
+            aria-label="Publish store"
+            isSelected={published}
+            onChange={(v) => draft.published.set(v)}
+          >
+            <Switch.Content>
+              <Switch.Control>
+                <Switch.Thumb />
+              </Switch.Control>
+              <span className="eyn-switch-status" aria-hidden="true">{published ? "On" : "Off"}</span>
+            </Switch.Content>
+          </Switch>);
 }
