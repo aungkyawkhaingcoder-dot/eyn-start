@@ -108,3 +108,15 @@ uses the existing draft/discard/apply workflow. The hero uses the store cover
 or a real product spotlight. Mobile layouts simplify depth effects; reduced
 motion is honored. Filtering, product details, cart and unpaid checkout remain
 shared across designs.
+
+
+### Optional ambient backgrounds
+
+The separate Background picker supports Theme background (default), Soft Color
+Blobs and Ambient Mesh. It does not replace `designStyle`. The opt-in ambient
+modes keep the light canvas white and use the selected dark canvas in dark mode,
+and use static radial gradients with no grid pattern or animation. Accent hue
+and chroma color the gradients; Base adjusts their chroma and intensity. Theme
+background restores the selected design's original light/dark background.
+The setting is saved as `storefrontConfig.backgroundEffect` through the existing
+draft/apply workflow. No migration or image asset is required.

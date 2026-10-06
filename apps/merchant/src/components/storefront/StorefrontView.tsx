@@ -15,6 +15,7 @@ import { CartPanel } from "./CartPanel";
 import { ProductCard, ProductImage, AddToCart } from "./ProductCard";
 import "./storefront.css";
 import { EditableCopy, type CopyKey } from "./EditableCopy";
+import { backgroundEffect } from "./backgrounds";
 import { designStyle } from "./styles";
 import { themeStyle } from "./design";
 import { loadStorefrontFont } from "./fonts";
@@ -157,6 +158,7 @@ export function StorefrontView({
       <div
         ref={fontRoot}
         className="sf"
+        data-background={backgroundEffect(config.backgroundEffect)}
         data-design={designStyle(config.designStyle)}
         data-store-theme={store.theme || "eyn-light"}
         style={themeStyle(config, store.theme === "eyn-dark") as CSSProperties}

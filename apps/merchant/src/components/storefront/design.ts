@@ -1,3 +1,4 @@
+import { ambientColors, backgroundEffect } from "./backgrounds";
 import { fontFamily } from "./fonts";
 import type { StorefrontConfig } from "../../types/store";
 export const colorKeys = [
@@ -98,14 +99,16 @@ export function palette(base: string, mode: string) {
 }
 export function themeStyle(config: StorefrontConfig, dark: boolean) {
   const c = { ...defaultColors(dark), ...config };
+  const ambient = backgroundEffect(config.backgroundEffect) !== "theme";
   return {
+    ...ambientColors(config, dark),
     "--sf-font": fontFamily(config.fontFamily),
     "--sf-radius": `${config.radius || "8"}px`,
     "--sf-form-radius": `${config.formRadius || "8"}px`,
     "--sf-line": config.themeHue !== undefined ? `oklch(${dark ? ".28" : ".92"} ${config.themeBase || "0"} ${config.themeHue})` : `color-mix(in oklab, ${c.text} ${dark ? "18%" : "8%"}, ${c.background})`,
     "--sf-soft": `color-mix(in oklab, ${c.primary} ${dark ? "12%" : "5%"}, ${c.surface})`,
-    "--sf-bg": c.background,
-    "--sf-panel": c.surface,
+    "--sf-bg": ambient && !dark ? "#ffffff" : c.background,
+    "--sf-panel": ambient && !dark ? "#ffffff" : c.surface,
     "--sf-ink": c.text,
     "--sf-muted": c.muted,
     "--sf-button": c.primary,

@@ -15,7 +15,7 @@ test("theme edits preview immediately, restore as a draft and save their seed", 
     storefrontConfig: {},
     updatedAt: "2026-09-29T00:00:00Z",
   };
-  await page.route("**/api/v1/stores**", async (route) => {
+  await page.context().route("**/api/v1/stores**", async (route) => {
     if (route.request().method() === "PUT") {
       const data = route.request().postDataJSON();
       saved = data.storefrontConfig;
@@ -45,7 +45,30 @@ test("theme edits preview immediately, restore as a draft and save their seed", 
   await expect(
     page.getByRole("button", { name: "Apply to storefront", exact: true }),
   ).toBeDisabled();
+  const popupPromise = page.waitForEvent("popup");
+  await page.getByRole("button", { name: "Open draft preview window" }).click();
+  const popup = await popupPromise;
+  const popupCanvas = popup.frameLocator('iframe[title="Live storefront preview"]').locator(".sf");
+  await expect(popupCanvas).toBeVisible();
+  await expect(popup.getByRole("button", {name:"Theme preset", exact:true})).toBeVisible();
+  await expect(popup.getByRole("button", {name:"Apply to storefront", exact:true})).toBeVisible();
+  await expect(popup.locator(".design-theme-controls")).toHaveCSS("position","sticky");
+  await popupCanvas.getByRole("textbox", { name: "Edit heroTitle", exact: true }).fill("Edited in a separate window");
+  await expect(canvas.getByRole("textbox", { name: "Edit heroTitle", exact: true })).toHaveText("Edited in a separate window");
   await chooseTheme("Mint");
+  await expect.poll(() => popupCanvas.evaluate(n => (n as HTMLElement).style.getPropertyValue("--sf-button"))).toBe(await canvas.evaluate(n => (n as HTMLElement).style.getPropertyValue("--sf-button")));
+  await expect(popup.locator(".preview-viewport")).toHaveCSS("border-radius","0px");
+  await popupCanvas.evaluate(node => {
+    const doc = node.ownerDocument;
+    doc.defaultView!.scrollTo(0,doc.documentElement.scrollHeight);
+  });
+  expect(await popupCanvas.evaluate(node => {
+    const doc = node.ownerDocument;
+    return Math.abs(doc.documentElement.scrollHeight - doc.defaultView!.innerHeight - doc.defaultView!.scrollY) < 3;
+  })).toBe(true);
+  const closed = popup.waitForEvent("close");
+  await popup.getByRole("button", {name:"Back to editor", exact:true}).click();
+  await closed;
   await expect(
     page.getByRole("button", { name: "Apply to storefront", exact: true }),
   ).toBeEnabled();
@@ -306,4 +329,120 @@ test("theme edits preview immediately, restore as a draft and save their seed", 
       () => document.documentElement.scrollWidth <= innerWidth,
     ),
   ).toBe(true);
+});
+
+test("ambient backgrounds keep a white canvas and save independently of design", async ({
+  page,
+}) => {
+  let store = {
+    id: 1,
+    name: "Everyday Studio",
+    slug: "studio",
+    description: "Everyday essentials",
+    currency: "MMK",
+    published: true,
+    theme: "eyn-light",
+    storefrontConfig: { designStyle: "glassmorphism" },
+    updatedAt: "2026-10-05T00:00:00Z",
+  };
+  let saved: Record<string, string | boolean> | undefined;
+  await page.route("**/api/v1/stores**", async (route) => {
+    if (route.request().method() === "PUT") {
+      const data = route.request().postDataJSON();
+      saved = data.storefrontConfig;
+      store = { ...store, ...data };
+    }
+    await route.fulfill({
+      json: route.request().url().includes("/products")
+        ? []
+        : route.request().url().endsWith("/stores")
+          ? [store]
+          : store,
+    });
+  });
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto("/stores/1/editor");
+  const canvas = page
+    .frameLocator('iframe[title="Live storefront preview"]')
+    .locator(".sf");
+  const choose = async (name: string) => {
+    await page
+      .getByRole("button", {
+        name: "Choose storefront background",
+        exact: true,
+      })
+      .click();
+    await page
+      .getByRole("button", { name: `Use ${name} background`, exact: true })
+      .click();
+  };
+  await expect(canvas).toHaveAttribute("data-background", "theme");
+  for (const name of ["Soft Color Blobs", "Ambient Mesh"]) {
+    await choose(name);
+    await expect(canvas).toHaveCSS("background-color", "rgb(255, 255, 255)");
+    await expect(canvas).toHaveAttribute("data-design", "glassmorphism");
+    const before = await canvas.evaluate(
+      (n) => getComputedStyle(n).backgroundImage,
+    );
+    await page.getByRole("slider", { name: "Accent hue", exact: true }).focus();
+    await page.keyboard.press("ArrowRight");
+    await expect
+      .poll(() => canvas.evaluate((n) => getComputedStyle(n).backgroundImage))
+      .not.toBe(before);
+    const baseBefore = await canvas.evaluate(
+      (n) => getComputedStyle(n).backgroundImage,
+    );
+    await page.getByRole("slider", { name: "Base tint", exact: true }).focus();
+    await page.keyboard.press("ArrowRight");
+    await expect
+      .poll(() => canvas.evaluate((n) => getComputedStyle(n).backgroundImage))
+      .not.toBe(baseBefore);
+    await expect(canvas).toHaveCSS("background-color", "rgb(255, 255, 255)");
+    expect(
+      await canvas.evaluate((n) => getComputedStyle(n).backgroundImage),
+    ).not.toContain("repeating-");
+    await canvas.screenshot({
+      path: `/tmp/eyn-background-${name.replaceAll(" ", "-")}.png`,
+    });
+  }
+  await page
+    .getByRole("button", { name: "Apply to storefront", exact: true })
+    .click();
+  await expect.poll(() => saved?.backgroundEffect).toBe("mesh");
+  expect(saved?.designStyle).toBe("glassmorphism");
+  await page.reload();
+  await expect(canvas).toHaveAttribute("data-background", "mesh");
+  await expect(canvas).toHaveCSS("background-color", "rgb(255, 255, 255)");
+  await page.setViewportSize({ width: 390, height: 844 });
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
+  ).toBe(true);
+  await page
+    .getByRole("button", { name: "Use dark theme", exact: true })
+    .click();
+  for (const effect of ["Soft Color Blobs", "Ambient Mesh"]) {
+    await choose(effect);
+    await expect(canvas).not.toHaveCSS(
+      "background-color",
+      "rgb(255, 255, 255)",
+    );
+    await expect(canvas).toHaveCSS("color-scheme", "dark");
+    const before = await canvas.evaluate(
+      (n) => getComputedStyle(n).backgroundImage,
+    );
+    await page.getByRole("slider", { name: "Accent hue", exact: true }).focus();
+    await page.keyboard.press("ArrowRight");
+    await expect
+      .poll(() => canvas.evaluate((n) => getComputedStyle(n).backgroundImage))
+      .not.toBe(before);
+    await canvas.screenshot({
+      path: `/tmp/eyn-dark-${effect.replaceAll(" ", "-")}.png`,
+    });
+  }
+  await choose("Theme background");
+  await expect(canvas).toHaveAttribute("data-background", "theme");
+  await expect(canvas).toHaveAttribute("data-store-theme", "eyn-dark");
+  await expect(canvas).not.toHaveCSS("background-color", "rgb(255, 255, 255)");
 });

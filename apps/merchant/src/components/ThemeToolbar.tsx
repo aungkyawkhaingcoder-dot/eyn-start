@@ -15,7 +15,6 @@ import {
 import {
   Moon,
   Sun,
-  RotateCcw,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -605,11 +604,13 @@ export function ThemeToolbar({ draft }: { draft: Observable<StoreDraft> }) {
             {dark ? <Sun size={18} /> : <Moon size={18} />}
           </Button>
           <Button
-            variant="ghost"
+            variant="secondary"
+            className="theme-eyn-default"
+            aria-label="EYN default color"
             onPress={() => update(eynThemeSeed, dark, false)}
           >
-            <RotateCcw size={15} />
-            Reset colors
+            <span className="theme-eyn-swatch" aria-hidden="true" />
+            EYN default
           </Button>
         </div>
       </div>

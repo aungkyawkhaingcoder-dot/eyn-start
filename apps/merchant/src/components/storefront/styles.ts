@@ -1,5 +1,10 @@
 export const storefrontStyles = [
   {
+    id: "liquid-glass",
+    name: "Liquid Glass",
+    description: "Clear glass with luminous edges and fluid reflections.",
+  },
+  {
     id: "glassmorphism",
     name: "Glassmorphism",
     description: "Translucent panels with a soft color glow.",
@@ -18,11 +23,6 @@ export const storefrontStyles = [
     id: "flat",
     name: "Flat Design",
     description: "Crisp shapes and clear, direct browsing.",
-  },
-  {
-    id: "spatial",
-    name: "Spatial UI",
-    description: "Layered composition with room for each product.",
   },
 ] as const;
 export function designStyle(value?: string) {

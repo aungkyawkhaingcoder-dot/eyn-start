@@ -4,6 +4,7 @@ export type StorefrontConfig = Partial<
     | "themeChroma"
     | "themeLightness"
     | "themeBase"
+    | "backgroundEffect"
     | "designStyle"
     | "fontFamily"
     | "radius"

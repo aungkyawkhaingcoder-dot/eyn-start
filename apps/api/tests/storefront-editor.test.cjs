@@ -22,10 +22,15 @@ test('suggested fonts survive store validation without permitting arbitrary CSS'
 });
 
 test('storefront design is an allowlisted saved preference',()=>{
- for(const designStyle of ['glassmorphism','neumorphism','claymorphism','flat','spatial']) assert.equal(storeInput({...base,storefrontConfig:{designStyle}}).storefrontConfig.designStyle,designStyle);
+ for(const designStyle of ['liquid-glass','glassmorphism','neumorphism','claymorphism','flat']) assert.equal(storeInput({...base,storefrontConfig:{designStyle}}).storefrontConfig.designStyle,designStyle);
  for(const designStyle of ['unknown','',null,{},'<script>']) assert.throws(()=>storeInput({...base,storefrontConfig:{designStyle}}));
 });
 
 test('retired storefront designs normalize to flat when saved',()=>{
- for(const designStyle of ['minimalism','bento','skeuomorphism','maximalism']) assert.equal(storeInput({...base,storefrontConfig:{designStyle}}).storefrontConfig.designStyle,'flat');
+ for(const designStyle of ['minimalism','bento','skeuomorphism','maximalism','spatial']) assert.equal(storeInput({...base,storefrontConfig:{designStyle}}).storefrontConfig.designStyle,'flat');
+});
+
+test('background effects are independent of the storefront style',()=>{
+ for(const backgroundEffect of ['theme','blobs','mesh']) assert.deepEqual(storeInput({...base,storefrontConfig:{designStyle:'glassmorphism',backgroundEffect}}).storefrontConfig,{designStyle:'glassmorphism',backgroundEffect});
+ for(const backgroundEffect of ['grid','url(x)',null,{}]) assert.throws(()=>storeInput({...base,storefrontConfig:{backgroundEffect}}));
 });

@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { batch, observable, type Observable } from "@legendapp/state";
 import { useSelector } from "@legendapp/state/react";
 import { Button, Spinner, Popover } from "@heroui/react";
+import { Check, Image, RotateCcw, Type, Upload } from "lucide-react";
 import { Field } from "./Fields";
 import { copyLimits, type CopyKey } from "./storefront/EditableCopy";
 import { ThemeToolbar } from "./ThemeToolbar";
@@ -53,8 +54,8 @@ function ApplyButton({
     () => designSnapshot(draft.get()) !== designSnapshot(store),
   );
   return (
-    <Button type="submit" isDisabled={!dirty || loading} isPending={loading}>
-      {loading && <Spinner size="sm" />}Apply to storefront
+    <Button type="submit" aria-label="Apply to storefront" isDisabled={!dirty || loading} isPending={loading}>
+      {loading ? <Spinner size="sm" /> : <Upload size={15} aria-hidden="true" />}Apply
     </Button>
   );
 }
@@ -124,9 +125,11 @@ function DraftStatus({ draft, store }: { draft: Draft; store: Store }) {
   }, [draft, store.id, store.updatedAt]);
   return (
     <div className="design-draft-status">
-      <p role="status">{status}</p>
+      <p role="status" title={status}><Check size={13} aria-hidden="true" /><span className="editor-status-short" aria-hidden="true">{status === "Unsaved changes" ? "Editing" : status.includes("unavailable") ? "Unsaved" : "Draft"}</span><span className="editor-sr-only">{status}</span></p>
       <Button
         variant="secondary"
+        isIconOnly
+        aria-label="Discard draft"
         onPress={() => {
           batch(() => {
             draft.storefrontConfig.set(
@@ -144,16 +147,18 @@ function DraftStatus({ draft, store }: { draft: Draft; store: Store }) {
           setStatus("Saved version restored");
         }}
       >
-        Discard draft
+        <RotateCcw size={14} aria-hidden="true"><title>Discard draft</title></RotateCcw>
       </Button>
       <Button
         variant="secondary"
+        isIconOnly
+        aria-label="Reset text"
         onPress={() => {
           for (const key of Object.keys(copyLimits) as CopyKey[])
             draft.storefrontConfig[key].set("");
         }}
       >
-        Reset text
+        <Type size={14} aria-hidden="true"><title>Reset text</title></Type>
       </Button>
     </div>
   );
@@ -184,6 +189,11 @@ export function StorefrontEditor({
   const [toolbarTarget, setToolbarTarget] = useState<HTMLDivElement | null>(
     null,
   );
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("editorWindow") !== "1") return;
+    document.body.classList.add("storefront-editor-window");
+    return () => document.body.classList.remove("storefront-editor-window");
+  }, []);
   const { loading, save } = useSaveAction();
   return (
     <div className="store-editor-preview storefront-design-workspace design-button-workspace">
@@ -209,8 +219,8 @@ export function StorefrontEditor({
         <fieldset disabled={loading}>
           <DraftStatus draft={draft} store={store} />
           <Popover>
-            <Button variant="secondary" isDisabled={loading}>
-              Logo & cover
+            <Button variant="secondary" aria-label="Logo & cover" isDisabled={loading}>
+              <Image size={15} aria-hidden="true" />Branding
             </Button>
             <Popover.Content
               placement="bottom start"

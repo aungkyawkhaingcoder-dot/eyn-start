@@ -85,14 +85,14 @@ for (const width of [390, 1440]) {
   }) => {
     await page.setViewportSize({ width, height: 900 });
     const styles = [
-      "glassmorphism",
+      "liquid-glass", "glassmorphism",
       "neumorphism",
       "claymorphism",
       "flat",
-      "spatial",
     ];
     let style = "flat",
-      theme = "eyn-light";
+      theme = "eyn-light",
+      backgroundEffect = "theme";
     await page.route("**/api/v1/storefront/designs", (route) =>
       route.fulfill({
         json: {
@@ -102,7 +102,7 @@ for (const width of [390, 1440]) {
           description: "Considered essentials for your everyday.",
           currency: "MMK",
           theme,
-          storefrontConfig: { designStyle: style },
+          storefrontConfig: { designStyle: style, backgroundEffect },
           bestSellerIds: [],
           products: Array.from({ length: 4 }, (_, i) => ({
             id: i + 1,
@@ -122,11 +122,43 @@ for (const width of [390, 1440]) {
         },
       }),
     );
+    for (backgroundEffect of ["theme", "blobs", "mesh"])
     for (theme of ["eyn-light", "eyn-dark"])
       for (style of styles) {
         await page.goto("/shop/designs");
         await expect(page.locator(".sf")).toHaveAttribute("data-design", style);
         await expect(page.locator(".sf-product")).toHaveCount(4);
+        await expect(page.locator(".sf-product-open").first()).toHaveCSS("border-top-width", "0px");
+        await expect(page.locator(".sf-product-open").first()).toHaveCSS("box-shadow", "none");
+        if (["liquid-glass", "glassmorphism"].includes(style)) {
+          for (const selector of [".sf-product", ".sf-spotlight"]) {
+            await expect(page.locator(selector).first()).toHaveCSS("border-top-width", "0px");
+            await expect(page.locator(selector).first()).toHaveCSS("border-bottom-width", "0px");
+          }
+        }
+        if (theme === "eyn-light" && backgroundEffect === "theme" && ["claymorphism", "glassmorphism"].includes(style)) {
+          if (style === "glassmorphism") {
+            await expect(page.locator(".sf-hero")).not.toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+            await expect(page.locator(".sf-hero")).toHaveCSS("backdrop-filter", theme === "eyn-light" ? "none" : "blur(8px)");
+          } else await expect(page.locator(".sf-hero")).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+          await page.screenshot({path:`/tmp/eyn-light-theme-${style}-${width}.png`});
+        }
+        if (theme === "eyn-dark" && backgroundEffect === "theme") {
+          await expect(page.locator(".sf-header")).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+          if (style === "glassmorphism") {
+            await expect(page.locator(".sf-hero")).not.toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+            await expect(page.locator(".sf-hero")).toHaveCSS("backdrop-filter", theme === "eyn-light" ? "none" : "blur(8px)");
+          } else await expect(page.locator(".sf-hero")).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+          await page.screenshot({path:`/tmp/eyn-dark-theme-${style}-${width}.png`});
+        }
+        if (style === "liquid-glass") {
+          const card = page.locator(".sf-spotlight");
+          await expect(card).toHaveCSS("backdrop-filter", "blur(20px) saturate(1.7)");
+          await expect(card).toHaveCSS("background-image", /radial-gradient/);
+          await page.screenshot({ path: `/tmp/eyn-liquid-${theme}-${backgroundEffect}-${width}.png` });
+        }
+        if (["glassmorphism", "flat"].includes(style) && backgroundEffect === "mesh")
+          await page.screenshot({path:`/tmp/eyn-review-${style}-${theme}-${width}.png`, fullPage:true});
         if (style === "maximalism")
           await expect(page.locator(".sf-product").first()).toHaveCSS(
             "border-top-width",
@@ -174,5 +206,64 @@ for (const width of [390, 1440]) {
             fullPage: true,
           });
       }
+  });
+}
+
+for (const effect of ["blobs", "mesh"]) {
+  test(`active category stays visible on ${effect}`, async ({ page }) => {
+    await page.route("**/api/v1/storefront/filters", (route) =>
+      route.fulfill({
+        json: {
+          id: 904,
+          name: "Filters",
+          slug: "filters",
+          currency: "MMK",
+          theme: "eyn-light",
+          description: "",
+          storefrontConfig: {
+            backgroundEffect: effect,
+            primary: "#2458cc",
+            buttonText: "#ffffff",
+            accent: "#2458cc",
+          },
+          products: [
+            {
+              id: 1,
+              name: "Sample",
+              description: "",
+              price: "1000",
+              inventory: 2,
+              imageUrl: "",
+              category: { id: 1, name: "Accessories" },
+            },
+          ],
+          bestSellerIds: [],
+        },
+      }),
+    );
+    await page.goto("/shop/filters");
+    const all = page.getByRole("button", { name: "All products", exact: true });
+    const category = page.getByRole("button", {
+      name: "Accessories",
+      exact: true,
+    });
+    const activeBackground = await all.evaluate(
+      (n) => getComputedStyle(n).backgroundColor,
+    );
+    expect(activeBackground).not.toBe("rgba(0, 0, 0, 0)");
+    expect(activeBackground).not.toBe("rgb(36, 88, 204)");
+    await expect(all).toHaveCSS("border-top-width", "0px");
+    expect(
+      await all.evaluate((n) => getComputedStyle(n, "::after").content),
+    ).toBe("none");
+    await category.click();
+    await expect(category).toHaveAttribute("aria-pressed", "true");
+    await expect(category).toHaveCSS("background-color", activeBackground);
+    await expect(all).toHaveAttribute("aria-pressed", "false");
+    await expect(all).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
+    await expect(page.locator(".sf")).toHaveCSS(
+      "background-color",
+      "rgb(255, 255, 255)",
+    );
   });
 }

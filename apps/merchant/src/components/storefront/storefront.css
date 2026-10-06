@@ -242,6 +242,11 @@
   border-radius: 0;
 }
 .sf-product-open {
+  appearance:none;
+  border:0;
+  background:transparent;
+  padding:0;
+  box-shadow:none;
   text-align: left;
   width: 100%;
   color: inherit;
@@ -363,7 +368,7 @@
   overflow: auto;
   margin: auto;
   width: min(760px, calc(100% - 24px));
-  box-shadow: 0 20px 100px #0005;
+  box-shadow: 0 16px 48px var(--sf-shadow);
 }
 .sf-dialog::backdrop {
   background: #0009;
@@ -687,7 +692,7 @@
 .sf-footer > * { max-width:100%; }
 
 /* Shared editorial foundation. All design variants inherit the store's theme roles. */
-.sf[data-design] { --sf-shadow:color-mix(in srgb,var(--sf-ink) 12%,transparent); --sf-highlight:color-mix(in srgb,var(--sf-panel) 60%,white); }
+.sf[data-design] { --sf-shadow:color-mix(in srgb,var(--sf-shadow-color) var(--sf-shadow-strength),transparent); --sf-shadow-color:color-mix(in oklab,var(--sf-ambient-a) 80%,var(--sf-ambient-b)); --sf-shadow-strength:65%; --sf-highlight:color-mix(in srgb,var(--sf-panel) 60%,white); }
 .sf[data-design] .sf-main { max-width:1440px; margin-inline:auto; }
 .sf[data-design] .sf-hero { position:relative; overflow:hidden; border-radius:var(--sf-radius); }
 .sf[data-design] .sf-hero-with-product { grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr); gap:24px; align-items:center; padding:24px; }
@@ -826,3 +831,485 @@
   .sf[data-store-theme="eyn-light"][data-design="spatial"] .sf-spotlight { transform:none; box-shadow:0 3px 8px var(--sf-shadow); }
 }
 @media(prefers-reduced-motion:reduce) { .sf[data-store-theme="eyn-light"][data-design="spatial"] .sf-spotlight { transform:none; } }
+
+/* Ambient layers inherit the theme canvas; light mode retains pure white. */
+.sf[data-design][data-background="blobs"],.sf[data-design][data-background="mesh"] {
+  background-color:var(--sf-bg);
+  background-repeat:no-repeat;
+  background-size:100% 100%;
+  --sf-tint:var(--sf-panel);
+  --sf-tint-strong:var(--sf-panel);
+}
+.sf[data-design][data-background="blobs"] {
+  background-image:radial-gradient(ellipse 42% 28% at 0% 8%,var(--sf-ambient-a),transparent 100%),radial-gradient(ellipse 38% 27% at 100% 38%,var(--sf-ambient-b),transparent 100%),radial-gradient(ellipse 45% 25% at 8% 78%,var(--sf-ambient-c),transparent 100%);
+}
+.sf[data-design][data-background="mesh"] {
+  background-image:radial-gradient(ellipse 65% 38% at 0% 0%,var(--sf-ambient-a),transparent 90%),radial-gradient(ellipse 55% 42% at 100% 20%,var(--sf-ambient-b),transparent 90%),radial-gradient(ellipse 60% 40% at 10% 70%,var(--sf-ambient-c),transparent 90%),radial-gradient(ellipse 50% 35% at 100% 90%,var(--sf-ambient-a),transparent 90%);
+}
+.sf[data-design][data-background]:not([data-background="theme"]) :is(.sf-header,.sf-announcement,.sf-hero,.sf-hero-copy,.sf-about) {
+  background:transparent;
+  color:var(--sf-ink);
+}
+.sf[data-design][data-background]:not([data-background="theme"]) :is(.sf-product,.sf-spotlight,.sf-search,.sf-dialog) { background:var(--sf-panel); color:var(--sf-ink); }
+@media(max-width:700px) {
+  .sf[data-design][data-background="blobs"],.sf[data-design][data-background="mesh"] { background-size:160% 100%; background-position:50% 0; }
+}
+
+/* Soft category selection inherits the editor radius. */
+.sf[data-design][data-background]:not([data-background="theme"]) .sf-categories { gap:6px; }
+.sf[data-design][data-background]:not([data-background="theme"]) .sf-categories button {
+  background:transparent !important;
+  color:var(--sf-muted) !important;
+  border:0;
+  box-shadow:none;
+  border-radius:var(--sf-radius, 8px);
+  padding:7px 13px;
+  min-height:36px;
+  font-weight:400;
+}
+.sf[data-design][data-background]:not([data-background="theme"]) .sf-categories button[aria-pressed="true"] {
+  background:color-mix(in srgb,var(--sf-accent) 9%,var(--sf-panel)) !important;
+  color:var(--sf-ink) !important;
+  font-weight:400;
+}
+.sf[data-design][data-background]:not([data-background="theme"]) .sf-categories button::after { content:none; }
+
+.sf[data-store-theme="eyn-dark"][data-background]:not([data-background="theme"]) .sf-categories button[aria-pressed="true"] {
+  background:color-mix(in srgb,var(--sf-accent) 18%,var(--sf-panel)) !important;
+}
+
+/* Light ambient art direction: color at the edges, clean space around the content. */
+.sf[data-store-theme="eyn-light"][data-background="blobs"] {
+  background-image:radial-gradient(ellipse 38% 23% at 100% 12%,var(--sf-ambient-a),transparent 95%),radial-gradient(ellipse 35% 24% at 0% 46%,var(--sf-ambient-b),transparent 95%),radial-gradient(ellipse 42% 25% at 92% 83%,var(--sf-ambient-c),transparent 95%);
+}
+.sf[data-store-theme="eyn-light"][data-background="mesh"] {
+  background-image:radial-gradient(ellipse 52% 30% at 0% 0%,var(--sf-ambient-c),transparent 95%),radial-gradient(ellipse 50% 36% at 100% 24%,var(--sf-ambient-a),transparent 95%),radial-gradient(ellipse 45% 30% at 4% 74%,var(--sf-ambient-b),transparent 95%),radial-gradient(ellipse 48% 25% at 100% 98%,var(--sf-ambient-c),transparent 95%);
+}
+.sf[data-store-theme="eyn-light"][data-design][data-background]:not([data-background="theme"]) {
+  --sf-image-wash:color-mix(in srgb,var(--sf-accent) 3%,#fff);
+}
+.sf[data-store-theme="eyn-light"][data-design][data-background]:not([data-background="theme"]) .sf-hero {
+  border:0;
+}
+.sf[data-store-theme="eyn-light"][data-design][data-background]:not([data-background="theme"]) :is(.sf-product-image,.sf-spotlight-image) {
+  background:var(--sf-image-wash);
+}
+.sf[data-store-theme="eyn-light"][data-design][data-background]:not([data-background="theme"]) .sf-spotlight {
+  border-color:var(--sf-line);
+}
+.sf[data-store-theme="eyn-light"][data-design][data-background]:not([data-background="theme"]) .sf-section-title {
+  margin-bottom:24px;
+  align-items:end;
+}
+.sf[data-store-theme="eyn-light"][data-design][data-background]:not([data-background="theme"]) .sf-filters {
+  padding:14px 0 20px;
+  border-bottom:1px solid var(--sf-line);
+  margin-bottom:24px;
+}
+.sf[data-store-theme="eyn-light"][data-design][data-background]:not([data-background="theme"]) .sf-about {
+  margin-top:56px;
+  padding-top:32px;
+}
+@media(max-width:700px) {
+  .sf[data-store-theme="eyn-light"][data-design][data-background]:not([data-background="theme"]) .sf-filters { padding-top:0; margin-bottom:20px; }
+}
+
+/* Light catalog composition: imagery first, with a clear type and price hierarchy. */
+.sf[data-store-theme="eyn-light"][data-design] {
+  --sf-photo-stage:color-mix(in srgb,var(--sf-accent) 4%,#f7f7f5);
+}
+.sf[data-store-theme="eyn-light"][data-design] .sf-hero-with-product {
+  grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);
+  gap:clamp(24px,4vw,64px);
+  padding:24px;
+}
+.sf[data-store-theme="eyn-light"][data-design] .sf-hero-copy {
+  padding:clamp(24px,3vw,42px);
+}
+.sf[data-store-theme="eyn-light"][data-design] h1 {
+  font-size:clamp(34px,4vw,60px);
+  font-weight:650;
+  line-height:1.12;
+  letter-spacing:-.045em;
+  margin:18px 0 22px;
+}
+.sf[data-store-theme="eyn-light"][data-design] .sf-hero-copy > p {
+  font-size:15px;
+  line-height:1.75;
+  max-width:38ch;
+  margin-bottom:26px;
+}
+.sf[data-store-theme="eyn-light"][data-design] .sf-section { padding-top:52px; }
+.sf[data-store-theme="eyn-light"][data-design] .sf-section-title .sf-overline { letter-spacing:.12em; font-size:10px; }
+.sf[data-store-theme="eyn-light"][data-design] .sf-section-title h2 { font-size:clamp(25px,2.8vw,36px); margin:8px 0 0; }
+.sf[data-store-theme="eyn-light"][data-design] .sf-product-copy { padding:18px 6px 16px; }
+.sf[data-store-theme="eyn-light"][data-design] .sf-product-copy .sf-overline { font-size:10px; font-weight:400; letter-spacing:.09em; }
+.sf[data-store-theme="eyn-light"][data-design] .sf-product h3 { font-size:16px; font-weight:500; line-height:1.5; margin:6px 0 8px; }
+.sf[data-store-theme="eyn-light"][data-design] .sf-product-copy p { font-size:15px; font-weight:650; color:var(--sf-ink); font-variant-numeric:tabular-nums; }
+.sf[data-store-theme="eyn-light"][data-design][data-background]:not([data-background="theme"]) .sf-product-image {
+  background:var(--sf-photo-stage);
+}
+.sf[data-store-theme="eyn-light"][data-design][data-background]:not([data-background="theme"]) .sf-spotlight-image {
+  background:var(--sf-photo-stage);
+}
+@media(max-width:700px) {
+  .sf[data-store-theme="eyn-light"][data-design] .sf-hero-with-product { grid-template-columns:1fr; padding:16px; gap:20px; }
+  .sf[data-store-theme="eyn-light"][data-design] .sf-hero-copy,
+  .sf[data-store-theme="eyn-light"][data-design] .sf-hero-with-product .sf-hero-copy { padding:18px 8px; }
+  .sf[data-store-theme="eyn-light"][data-design] h1 { font-size:clamp(32px,8vw,42px); }
+  .sf[data-store-theme="eyn-light"][data-design] .sf-section { padding-top:36px; }
+  .sf[data-store-theme="eyn-light"][data-design] .sf-product-copy { padding:12px 2px; }
+  .sf[data-store-theme="eyn-light"][data-design] .sf-product h3 { font-size:14px; }
+  .sf[data-store-theme="eyn-light"][data-design] .sf-product-copy p { font-size:14px; }
+}
+
+/* Ambient heroes share the catalog gutter instead of adding two nested insets. */
+.sf[data-store-theme][data-design][data-background]:not([data-background="theme"]) .sf-hero {
+  padding-inline:0;
+  padding-block:24px;
+}
+.sf[data-store-theme][data-design][data-background]:not([data-background="theme"]) .sf-hero .sf-hero-copy {
+  padding-inline:0;
+  padding-block:24px;
+}
+@media(max-width:700px) {
+  .sf[data-store-theme][data-design][data-background]:not([data-background="theme"]) .sf-hero,
+  .sf[data-store-theme][data-design][data-background]:not([data-background="theme"]) .sf-hero .sf-hero-copy {
+    padding-block:16px;
+  }
+}
+
+/* Empty spotlight images keep the same open card composition in both modes. */
+.sf[data-store-theme][data-design][data-background] .sf-spotlight[data-image="false"] .sf-spotlight-image {
+  height:96px;
+  background:transparent;
+}
+
+/* Background effects decorate the canvas; the selected trend owns card materials. */
+.sf[data-store-theme="eyn-light"][data-design][data-background]:not([data-background="theme"]) {
+  --sf-card-material:var(--sf-panel);
+  --sf-card-edge:var(--sf-line);
+  --sf-card-blur:none;
+  --sf-card-image:var(--sf-photo-stage);
+}
+.sf[data-store-theme="eyn-light"][data-design="glassmorphism"][data-background]:not([data-background="theme"]) {
+  --sf-card-material:color-mix(in srgb,var(--sf-panel) 58%,transparent);
+  --sf-card-edge:color-mix(in srgb,var(--sf-panel) 85%,transparent);
+  --sf-card-blur:blur(12px);
+  --sf-card-image:transparent;
+}
+.sf[data-store-theme="eyn-light"][data-design="neumorphism"][data-background]:not([data-background="theme"]) {
+  --sf-card-material:color-mix(in srgb,var(--sf-accent) 4%,var(--sf-panel));
+  --sf-card-edge:transparent;
+  --sf-card-image:var(--sf-card-material);
+}
+.sf[data-store-theme="eyn-light"][data-design="claymorphism"][data-background]:not([data-background="theme"]) {
+  --sf-card-material:color-mix(in srgb,var(--sf-accent) 10%,var(--sf-panel));
+  --sf-card-edge:transparent;
+  --sf-card-image:color-mix(in srgb,var(--sf-accent) 5%,var(--sf-panel));
+}
+.sf[data-store-theme="eyn-light"][data-design="spatial"][data-background]:not([data-background="theme"]) {
+  --sf-card-edge:var(--sf-material-line);
+}
+.sf[data-store-theme="eyn-light"][data-design][data-background]:not([data-background="theme"]) :is(.sf-product,.sf-spotlight) {
+  background:var(--sf-card-material);
+  border-color:var(--sf-card-edge);
+  -webkit-backdrop-filter:var(--sf-card-blur);
+  backdrop-filter:var(--sf-card-blur);
+}
+.sf[data-store-theme="eyn-light"][data-design][data-background]:not([data-background="theme"]) :is(.sf-product-image,.sf-spotlight-image) {
+  background:var(--sf-card-image);
+}
+.sf[data-store-theme="eyn-light"][data-design][data-background]:not([data-background="theme"]) .sf-spotlight[data-image="false"] .sf-spotlight-image {
+  background:transparent;
+}
+
+
+
+/* Keep depth in the same palette as the chosen background, with subtle intensity. */
+.sf[data-design][data-background="blobs"] {
+  --sf-shadow-color:color-mix(in oklab,var(--sf-ambient-a) 70%,var(--sf-ambient-c));
+}
+.sf[data-design][data-background="mesh"] {
+  --sf-shadow-color:color-mix(in oklab,var(--sf-ambient-b) 55%,var(--sf-ambient-c));
+}
+.sf[data-store-theme="eyn-dark"][data-design] { --sf-shadow-strength:45%; }
+.sf[data-design="neumorphism"] { --sf-shadow-strength:60%; }
+.sf[data-design="claymorphism"] { --sf-shadow-strength:50%; }
+
+/* About uses a straight section divider rather than a rounded card outline. */
+.sf[data-store-theme][data-design] .sf-about { border-radius:0; }
+
+/* Reviewed storefront materials: readable glass, aligned spatial layers, compact flat cards. */
+.sf[data-store-theme="eyn-dark"][data-design="glassmorphism"] :is(.sf-product,.sf-spotlight),
+.sf[data-store-theme="eyn-dark"][data-design="glassmorphism"][data-background]:not([data-background="theme"]) :is(.sf-product,.sf-spotlight) {
+  background:color-mix(in srgb,var(--sf-panel) 70%,transparent);
+  border:1px solid color-mix(in srgb,var(--sf-muted) 22%,transparent);
+  -webkit-backdrop-filter:blur(12px);
+  backdrop-filter:blur(12px);
+  box-shadow:none;
+}
+.sf[data-store-theme][data-design="glassmorphism"] .sf-product {
+  -webkit-backdrop-filter:blur(12px);
+  backdrop-filter:blur(12px);
+}
+.sf[data-store-theme][data-design="spatial"] .sf-spotlight {
+  transform:none;
+  box-shadow:0 5px 14px var(--sf-shadow);
+}
+.sf[data-store-theme][data-design="spatial"] .sf-product:nth-child(even) { translate:none; }
+.sf[data-store-theme][data-design="spatial"] .sf-product { border-bottom:0; }
+.sf[data-store-theme][data-design="flat"] .sf-product { padding:10px; }
+.sf[data-store-theme][data-design="flat"] .sf-product-copy { padding:14px 2px; }
+.sf[data-store-theme][data-design="flat"] .sf-section { padding-top:36px; }
+.sf[data-design="glassmorphism"] .sf-product-image:has(> svg),
+.sf[data-design="spatial"] .sf-product-image:has(> svg),
+.sf[data-design="flat"] .sf-product-image:has(> svg) {
+  aspect-ratio:auto;
+  height:clamp(110px,15vw,180px);
+  color:var(--sf-muted);
+}
+.sf[data-design="glassmorphism"] .sf-product-copy h3,
+.sf[data-design="spatial"] .sf-product-copy h3,
+.sf[data-design="flat"] .sf-product-copy h3 { line-height:1.45; }
+@media(max-width:700px) {
+  .sf[data-store-theme][data-design="flat"] .sf-product { padding:8px; }
+  .sf[data-store-theme][data-design="flat"] .sf-product-copy { padding:12px 2px; }
+  .sf[data-store-theme][data-design="spatial"] .sf-spotlight { box-shadow:0 3px 8px var(--sf-shadow); }
+}
+
+/* Light glass balances each background's color coverage without whitening the canvas. */
+.sf[data-store-theme="eyn-light"][data-design="glassmorphism"] {
+  --sf-frost-fill:color-mix(in srgb,var(--sf-panel) 66%,transparent);
+  --sf-frost-edge:color-mix(in srgb,var(--sf-muted) 16%,transparent);
+}
+.sf[data-store-theme="eyn-light"][data-design="glassmorphism"][data-background="blobs"] {
+  --sf-frost-fill:color-mix(in srgb,var(--sf-panel) 44%,transparent);
+}
+.sf[data-store-theme="eyn-light"][data-design="glassmorphism"][data-background="mesh"] {
+  --sf-frost-fill:color-mix(in srgb,var(--sf-panel) 54%,transparent);
+}
+.sf[data-store-theme="eyn-light"][data-design="glassmorphism"] :is(.sf-product,.sf-spotlight),
+.sf[data-store-theme="eyn-light"][data-design="glassmorphism"][data-background]:not([data-background="theme"]) :is(.sf-product,.sf-spotlight) {
+  background:var(--sf-frost-fill);
+  border:1px solid var(--sf-frost-edge);
+  box-shadow:none;
+}
+@supports not (backdrop-filter:blur(1px)) {
+  .sf[data-store-theme="eyn-light"][data-design][data-background] {
+    --sf-frost-fill:var(--sf-panel);
+  }
+}
+
+/* Glass surfaces have no outlined frame; their fill and reflection define the shape. */
+.sf[data-store-theme][data-design="glassmorphism"] :is(.sf-product,.sf-spotlight),
+.sf[data-store-theme][data-design="glassmorphism"][data-background]:not([data-background="theme"]) :is(.sf-product,.sf-spotlight) {
+  border:0;
+}
+.sf[data-store-theme="eyn-light"][data-design="glassmorphism"] :is(.sf-product,.sf-spotlight),
+.sf[data-store-theme="eyn-light"][data-design="glassmorphism"][data-background]:not([data-background="theme"]) :is(.sf-product,.sf-spotlight) {
+  background-image:linear-gradient(145deg,#ffffff24,transparent 42%);
+}
+
+/* Liquid glass: translucent material, soft lighting and a faint continuous rim. */
+.sf[data-design="liquid-glass"] {
+  --sf-liquid-fill:color-mix(in srgb,var(--sf-panel) 36%,transparent);
+  --sf-liquid-light:#ffffff80;
+  --sf-liquid-tint:10%;
+  --sf-shadow-strength:40%;
+}
+.sf[data-store-theme="eyn-dark"][data-design="liquid-glass"] {
+  --sf-liquid-fill:color-mix(in srgb,var(--sf-panel) 42%,transparent);
+  --sf-liquid-light:#ffffff20;
+  --sf-liquid-tint:7%;
+  --sf-shadow-strength:25%;
+}
+.sf[data-store-theme="eyn-light"][data-design="liquid-glass"][data-background="mesh"] {
+  --sf-liquid-fill:color-mix(in srgb,var(--sf-panel) 48%,transparent);
+}
+.sf[data-design="liquid-glass"][data-background="theme"] {
+  background-image:radial-gradient(ellipse at 5% 12%,color-mix(in srgb,var(--sf-accent) 16%,transparent),transparent 48%),radial-gradient(ellipse at 95% 65%,color-mix(in srgb,var(--sf-accent) 12%,transparent),transparent 52%);
+  background-size:100% 100%;
+}
+.sf[data-store-theme][data-design="liquid-glass"] :is(.sf-product,.sf-spotlight),
+.sf[data-store-theme][data-design="liquid-glass"][data-background]:not([data-background="theme"]) :is(.sf-product,.sf-spotlight) {
+  position:relative;
+  isolation:isolate;
+  overflow:hidden;
+  border:0;
+  border-radius:var(--sf-radius);
+  background:radial-gradient(ellipse at 95% 0%,color-mix(in srgb,var(--sf-accent) var(--sf-liquid-tint),transparent),transparent 65%),linear-gradient(135deg,var(--sf-liquid-light),transparent 36%),var(--sf-liquid-fill);
+  -webkit-backdrop-filter:blur(20px) saturate(170%);
+  backdrop-filter:blur(20px) saturate(170%);
+  box-shadow:0 4px 10px -4px var(--sf-shadow);
+}
+/* One continuous, low-contrast rim replaces the partial highlight. */
+.sf[data-design="liquid-glass"] :is(.sf-product,.sf-spotlight)::after {
+  content:"";
+  position:absolute;
+  inset:0;
+  border-radius:inherit;
+  pointer-events:none;
+  border:1px solid color-mix(in srgb,var(--sf-accent) 12%,transparent);
+}
+.sf[data-store-theme="eyn-dark"][data-design="liquid-glass"] :is(.sf-product,.sf-spotlight)::after {
+  border-color:color-mix(in srgb,var(--sf-accent) 16%,transparent);
+}
+.sf[data-store-theme][data-design="liquid-glass"] :is(.sf-product-image,.sf-spotlight-image),
+.sf[data-store-theme][data-design="liquid-glass"][data-background]:not([data-background="theme"]) :is(.sf-product-image,.sf-spotlight-image) { background:transparent; }
+@supports not (backdrop-filter:blur(1px)) {
+  .sf[data-store-theme][data-design="liquid-glass"][data-background] { --sf-liquid-fill:var(--sf-panel); }
+}
+
+/* The theme canvas continues through the hero instead of nesting a large panel. */
+.sf[data-store-theme][data-design="liquid-glass"][data-background="theme"] .sf-hero {
+  background:transparent;
+  border:0;
+  box-shadow:none;
+  padding-inline:0;
+}
+.sf[data-store-theme][data-design="liquid-glass"][data-background="theme"] .sf-hero .sf-hero-copy {
+  background:transparent;
+  padding-inline:0;
+}
+
+/* Light Flat and Spatial: an open hero, with material reserved for the products. */
+.sf[data-store-theme="eyn-light"]:is([data-design="flat"],[data-design="spatial"]) .sf-hero {
+  background:transparent;
+  border:0;
+  box-shadow:none;
+  padding-inline:0;
+}
+.sf[data-store-theme="eyn-light"]:is([data-design="flat"],[data-design="spatial"]) .sf-hero .sf-hero-copy {
+  background:transparent;
+  padding-inline:0;
+}
+.sf[data-store-theme="eyn-light"][data-design="flat"] :is(.sf-product,.sf-spotlight),
+.sf[data-store-theme="eyn-light"][data-design="flat"][data-background]:not([data-background="theme"]) :is(.sf-product,.sf-spotlight) {
+  background:#fff;
+  border:0;
+  box-shadow:none;
+}
+.sf[data-store-theme="eyn-light"][data-design="flat"] :is(.sf-product-image,.sf-spotlight-image),
+.sf[data-store-theme="eyn-light"][data-design="flat"][data-background]:not([data-background="theme"]) :is(.sf-product-image,.sf-spotlight-image) {
+  background:color-mix(in srgb,var(--sf-accent) 4%,#fff);
+}
+.sf[data-store-theme="eyn-light"][data-design="spatial"] :is(.sf-product,.sf-spotlight),
+.sf[data-store-theme="eyn-light"][data-design="spatial"][data-background]:not([data-background="theme"]) :is(.sf-product,.sf-spotlight) {
+  background:color-mix(in srgb,var(--sf-accent) 3%,#fff);
+  border:0;
+}
+.sf[data-store-theme="eyn-light"][data-design="spatial"] .sf-product { box-shadow:none; }
+.sf[data-store-theme="eyn-light"][data-design="spatial"] .sf-spotlight {
+  transform:none;
+  box-shadow:0 4px 12px -3px var(--sf-shadow);
+}
+.sf[data-store-theme="eyn-light"][data-design="spatial"] :is(.sf-product-image,.sf-spotlight-image),
+.sf[data-store-theme="eyn-light"][data-design="spatial"][data-background]:not([data-background="theme"]) :is(.sf-product-image,.sf-spotlight-image) {
+  background:color-mix(in srgb,var(--sf-accent) 6%,#fff);
+}
+.sf[data-store-theme="eyn-light"]:is([data-design="flat"],[data-design="spatial"])[data-background] .sf-spotlight[data-image="false"] .sf-spotlight-image {
+  background:transparent;
+}
+
+/* Dark theme backgrounds: continuous canvas, quiet header, material on cards only. */
+.sf[data-store-theme="eyn-dark"][data-design][data-background="theme"] {
+  background-color:var(--sf-bg);
+}
+.sf[data-store-theme="eyn-dark"][data-design][data-background="theme"] .sf-announcement {
+  background:transparent;
+  color:var(--sf-muted);
+  border:0;
+}
+.sf[data-store-theme="eyn-dark"][data-design][data-background="theme"] .sf-header {
+  background:transparent;
+  border-bottom:1px solid color-mix(in srgb,var(--sf-line) 55%,transparent);
+}
+.sf[data-store-theme="eyn-dark"][data-design][data-background="theme"] .sf-hero {
+  background:transparent;
+  border:0;
+  box-shadow:none;
+  padding-inline:0;
+}
+.sf[data-store-theme="eyn-dark"][data-design][data-background="theme"] .sf-hero .sf-hero-copy {
+  background:transparent;
+  padding-inline:0;
+}
+.sf[data-store-theme="eyn-dark"][data-design][data-background="theme"] h1 span { color:var(--sf-ink); }
+.sf[data-store-theme="eyn-dark"][data-design="flat"][data-background="theme"] :is(.sf-product,.sf-spotlight),
+.sf[data-store-theme="eyn-dark"][data-design="neumorphism"][data-background="theme"] :is(.sf-product,.sf-spotlight),
+.sf[data-store-theme="eyn-dark"][data-design="claymorphism"][data-background="theme"] :is(.sf-product,.sf-spotlight) {
+  background:var(--sf-panel);
+}
+
+/* Light theme canvas: reserve glass and clay materials for the cards, not a large hero slab. */
+.sf[data-store-theme="eyn-light"]:is([data-design="claymorphism"],[data-design="glassmorphism"])[data-background="theme"] .sf-hero {
+  background:transparent;
+  border:0;
+  box-shadow:none;
+  padding-inline:0;
+}
+.sf[data-store-theme="eyn-light"]:is([data-design="claymorphism"],[data-design="glassmorphism"])[data-background="theme"] .sf-hero .sf-hero-copy {
+  background:transparent;
+  padding-inline:0;
+}
+.sf[data-store-theme="eyn-light"][data-design="glassmorphism"][data-background="theme"] {
+  --sf-tint:color-mix(in srgb,var(--sf-accent) 5%,var(--sf-bg));
+  --sf-tint-strong:color-mix(in srgb,var(--sf-accent) 10%,var(--sf-bg));
+  --sf-frost-fill:color-mix(in srgb,var(--sf-panel) 34%,transparent);
+}
+.sf[data-store-theme="eyn-light"][data-design="claymorphism"][data-background="theme"] :is(.sf-product,.sf-spotlight) {
+  background:color-mix(in srgb,var(--sf-accent) 8%,var(--sf-panel));
+  border:0;
+  box-shadow:inset 1px 2px 4px color-mix(in srgb,var(--sf-bg) 65%,transparent),inset -1px -2px 4px var(--sf-shadow);
+}
+.sf[data-store-theme="eyn-light"][data-design="claymorphism"][data-background="theme"] .sf-product-image {
+  background:color-mix(in srgb,var(--sf-accent) 4%,var(--sf-panel));
+}
+
+/* Frosted glass needs a visible tonal backdrop, distinct from Flat's solid cards. */
+.sf[data-store-theme="eyn-light"][data-design="glassmorphism"][data-background="theme"] {
+  background-image:radial-gradient(ellipse at 90% 18%,color-mix(in srgb,var(--sf-accent) 20%,transparent),transparent 55%),linear-gradient(145deg,color-mix(in srgb,var(--sf-accent) 10%,var(--sf-bg)),var(--sf-bg) 60%,color-mix(in srgb,var(--sf-accent) 8%,var(--sf-bg)));
+  background-size:100% 100%;
+}
+.sf[data-store-theme="eyn-light"][data-design="glassmorphism"][data-background="theme"] :is(.sf-product,.sf-spotlight) {
+  background:linear-gradient(145deg,#ffffff20,transparent 60%),var(--sf-frost-fill);
+  -webkit-backdrop-filter:blur(16px) saturate(125%);
+  backdrop-filter:blur(16px) saturate(125%);
+  border:0;
+  box-shadow:0 3px 10px -5px var(--sf-shadow);
+}
+.sf[data-store-theme="eyn-light"][data-design="glassmorphism"][data-background="theme"] :is(.sf-product-image,.sf-spotlight-image) {
+  background:transparent;
+}
+
+/* A thin hero pane belongs only to Glassmorphism's theme background. */
+.sf[data-store-theme][data-design="glassmorphism"][data-background="theme"] .sf-hero {
+  background:color-mix(in srgb,var(--sf-panel) 18%,transparent);
+  -webkit-backdrop-filter:blur(8px);
+  backdrop-filter:blur(8px);
+  border:0;
+  box-shadow:none;
+}
+.sf[data-store-theme="eyn-dark"][data-design="glassmorphism"] :is(.sf-product,.sf-spotlight),
+.sf[data-store-theme="eyn-dark"][data-design="glassmorphism"][data-background]:not([data-background="theme"]) :is(.sf-product,.sf-spotlight) {
+  background:color-mix(in srgb,var(--sf-panel) 58%,transparent);
+}
+
+/* Restore the fuller light frosted material used before the transparency reductions. */
+.sf[data-store-theme="eyn-light"][data-design="glassmorphism"][data-background="theme"] {
+  --sf-tint:color-mix(in srgb,var(--sf-accent) 12%,var(--sf-bg));
+  --sf-tint-strong:color-mix(in srgb,var(--sf-accent) 22%,var(--sf-bg));
+  background-image:linear-gradient(145deg,var(--sf-tint-strong),var(--sf-bg) 65%);
+}
+.sf[data-store-theme="eyn-light"][data-design="glassmorphism"][data-background="theme"] .sf-hero {
+  background:radial-gradient(ellipse at 85% 25%,var(--sf-tint-strong),transparent 65%),var(--sf-tint);
+  -webkit-backdrop-filter:none;
+  backdrop-filter:none;
+}
+.sf[data-store-theme="eyn-light"][data-design="glassmorphism"][data-background] {
+  --sf-frost-fill:color-mix(in srgb,var(--sf-panel) 64%,transparent);
+}
+.sf[data-store-theme="eyn-light"][data-design="glassmorphism"][data-background] .sf-spotlight {
+  background:color-mix(in srgb,var(--sf-panel) 58%,transparent);
+}

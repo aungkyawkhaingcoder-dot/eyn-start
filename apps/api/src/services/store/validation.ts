@@ -135,9 +135,13 @@ function storefrontConfig(value: unknown): Record<string, string | boolean> {
       if (typeof value !== "string" || !value.trim() || !Number.isFinite(Number(value)) || Number(value) < 0 || Number(value) > max) throw invalid(`Invalid ${key}.`);
       result[key] = String(Number(value));
     }
+    else if (key === "backgroundEffect") {
+      if (typeof value !== "string" || !["theme", "blobs", "mesh"].includes(value)) throw invalid("Invalid storefront background.");
+      result[key] = value;
+    }
     else if (key === "designStyle") {
-      if (typeof value !== "string" || !["minimalism", "bento", "glassmorphism", "neumorphism", "skeuomorphism", "maximalism", "claymorphism", "flat", "spatial"].includes(value)) throw invalid("Invalid storefront design.");
-      result[key] = ["minimalism", "bento", "skeuomorphism", "maximalism"].includes(value) ? "flat" : value;
+      if (typeof value !== "string" || !["minimalism", "bento", "liquid-glass", "glassmorphism", "neumorphism", "skeuomorphism", "maximalism", "claymorphism", "flat", "spatial"].includes(value)) throw invalid("Invalid storefront design.");
+      result[key] = ["minimalism", "bento", "skeuomorphism", "maximalism", "spatial"].includes(value) ? "flat" : value;
     }
     else if (["fontFamily", "radius", "formRadius"].includes(key)) {
       const allowed = key === "fontFamily" ? ["system", "arial", "georgia", "inter", "figtree", "hanken", "geist", "dm-sans", "public-sans"] : ["0", "4", "8", "12", "16"];
