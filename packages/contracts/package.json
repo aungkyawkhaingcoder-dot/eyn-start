@@ -1,0 +1,11 @@
+{
+  "name": "@eyn/contracts",
+  "version": "0.1.0",
+  "private": true,
+  "exports": {
+    "./store": "./src/store.ts"
+  },
+  "dependencies": {
+    "@eyn/theme": "workspace:*"
+  }
+}

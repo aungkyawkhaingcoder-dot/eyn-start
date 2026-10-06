@@ -23,7 +23,10 @@
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-hot-toast": "^2.6.0",
-    "zustand": "^5.0.0"
+    "zustand": "^5.0.0",
+    "@eyn/theme": "workspace:*",
+    "@eyn/contracts": "workspace:*",
+    "@eyn/storefront": "workspace:*"
   },
   "devDependencies": {
     "@playwright/test": "^1.63.0",

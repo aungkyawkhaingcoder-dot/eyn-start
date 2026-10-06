@@ -129,11 +129,115 @@ importers:
         specifier: ^6.0.3
         version: 6.0.3
 
+  apps/eyn-admin-console:
+    dependencies:
+      '@eyn/auth':
+        specifier: workspace:*
+        version: link:../../packages/auth
+      '@eyn/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
+      '@heroui/react':
+        specifier: ^3.0.0
+        version: 3.2.6(@internationalized/date@3.12.4)(@react-aria/ssr@3.10.1(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(@react-aria/utils@3.34.1(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(@react-spectrum/provider@3.11.1(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-aria-components@1.21.1(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react-aria@3.52.1(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(tailwindcss@4.3.3)
+      '@heroui/styles':
+        specifier: ^3.0.0
+        version: 3.2.6(tailwindcss@4.3.3)
+      ahooks:
+        specifier: ^3.10.0
+        version: 3.10.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+      axios:
+        specifier: ^1.0.0
+        version: 1.20.0
+      lucide-react:
+        specifier: ^0.577.0
+        version: 0.577.0(react@19.3.0)
+      next:
+        specifier: ^16.0.0
+        version: 16.3.5(@playwright/test@1.63.0)(@types/node@25.9.8)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+      react:
+        specifier: ^19.2.0
+        version: 19.3.0
+      react-dom:
+        specifier: ^19.2.0
+        version: 19.3.0(react@19.3.0)
+      react-hot-toast:
+        specifier: ^2.6.0
+        version: 2.6.1(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+    devDependencies:
+      '@tailwindcss/postcss':
+        specifier: ^4.0.0
+        version: 4.3.3
+      '@types/node':
+        specifier: ^25.0.0
+        version: 25.9.8
+      '@types/react':
+        specifier: ^19.0.0
+        version: 19.3.0
+      '@types/react-dom':
+        specifier: ^19.0.0
+        version: 19.3.0(@types/react@19.3.0)
+      tailwindcss:
+        specifier: ^4.0.0
+        version: 4.3.3
+      typescript:
+        specifier: ^6.0.0
+        version: 6.0.3
+
+  apps/landing:
+    dependencies:
+      '@eyn/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
+      '@heroui/react':
+        specifier: ^3.0.0
+        version: 3.2.6(@internationalized/date@3.12.4)(@react-aria/ssr@3.10.1(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(@react-aria/utils@3.34.1(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(@react-spectrum/provider@3.11.1(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-aria-components@1.21.1(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react-aria@3.52.1(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(tailwindcss@4.3.3)
+      '@heroui/styles':
+        specifier: ^3.0.0
+        version: 3.2.6(tailwindcss@4.3.3)
+      next:
+        specifier: ^16.0.0
+        version: 16.3.5(@playwright/test@1.63.0)(@types/node@25.9.8)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+      react:
+        specifier: ^19.2.0
+        version: 19.3.0
+      react-dom:
+        specifier: ^19.2.0
+        version: 19.3.0(react@19.3.0)
+    devDependencies:
+      '@tailwindcss/postcss':
+        specifier: ^4.0.0
+        version: 4.3.3
+      '@types/node':
+        specifier: ^25.0.0
+        version: 25.9.8
+      '@types/react':
+        specifier: ^19.0.0
+        version: 19.3.0
+      '@types/react-dom':
+        specifier: ^19.0.0
+        version: 19.3.0(@types/react@19.3.0)
+      tailwindcss:
+        specifier: ^4.0.0
+        version: 4.3.3
+      typescript:
+        specifier: ^6.0.0
+        version: 6.0.3
+
   apps/merchant:
     dependencies:
       '@eyn/auth':
         specifier: workspace:*
         version: link:../../packages/auth
+      '@eyn/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      '@eyn/storefront':
+        specifier: workspace:*
+        version: link:../../packages/storefront
+      '@eyn/theme':
+        specifier: workspace:*
+        version: link:../../packages/theme
       '@eyn/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -196,6 +300,76 @@ importers:
         specifier: ^6.0.0
         version: 6.0.3
 
+  apps/storefront:
+    dependencies:
+      '@eyn/contracts':
+        specifier: workspace:*
+        version: link:../../packages/contracts
+      '@eyn/storefront':
+        specifier: workspace:*
+        version: link:../../packages/storefront
+      '@eyn/theme':
+        specifier: workspace:*
+        version: link:../../packages/theme
+      '@eyn/ui':
+        specifier: workspace:*
+        version: link:../../packages/ui
+      '@heroui/react':
+        specifier: ^3.0.0
+        version: 3.2.6(@internationalized/date@3.12.4)(@react-aria/ssr@3.10.1(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(@react-aria/utils@3.34.1(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(@react-spectrum/provider@3.11.1(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-aria-components@1.21.1(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react-aria@3.52.1(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(tailwindcss@4.3.3)
+      '@heroui/styles':
+        specifier: ^3.0.0
+        version: 3.2.6(tailwindcss@4.3.3)
+      '@legendapp/state':
+        specifier: 2.1.15
+        version: 2.1.15(react@19.3.0)
+      ahooks:
+        specifier: ^3.10.0
+        version: 3.10.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+      axios:
+        specifier: ^1.0.0
+        version: 1.20.0
+      lucide-react:
+        specifier: ^0.577.0
+        version: 0.577.0(react@19.3.0)
+      next:
+        specifier: ^16.0.0
+        version: 16.3.5(@playwright/test@1.63.0)(@types/node@25.9.8)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+      react:
+        specifier: ^19.2.0
+        version: 19.3.0
+      react-dom:
+        specifier: ^19.2.0
+        version: 19.3.0(react@19.3.0)
+      react-hot-toast:
+        specifier: ^2.6.0
+        version: 2.6.1(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+    devDependencies:
+      '@playwright/test':
+        specifier: ^1.63.0
+        version: 1.63.0
+      '@tailwindcss/postcss':
+        specifier: ^4.0.0
+        version: 4.3.3
+      '@types/node':
+        specifier: ^25.0.0
+        version: 25.9.8
+      '@types/react':
+        specifier: ^19.0.0
+        version: 19.3.0
+      '@types/react-dom':
+        specifier: ^19.0.0
+        version: 19.3.0(@types/react@19.3.0)
+      prettier:
+        specifier: ^3.0.0
+        version: 3.9.8
+      tailwindcss:
+        specifier: ^4.0.0
+        version: 4.3.3
+      typescript:
+        specifier: ^6.0.0
+        version: 6.0.3
+
   packages/auth:
     dependencies:
       '@eyn/ui':
@@ -226,6 +400,57 @@ importers:
       '@types/react':
         specifier: ^19.0.0
         version: 19.3.0
+
+  packages/contracts:
+    dependencies:
+      '@eyn/theme':
+        specifier: workspace:*
+        version: link:../theme
+
+  packages/storefront:
+    dependencies:
+      '@eyn/contracts':
+        specifier: workspace:*
+        version: link:../contracts
+      '@eyn/theme':
+        specifier: workspace:*
+        version: link:../theme
+      '@heroui/react':
+        specifier: ^3.0.0
+        version: 3.2.6(@internationalized/date@3.12.4)(@react-aria/ssr@3.10.1(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(@react-aria/utils@3.34.1(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(@react-spectrum/provider@3.11.1(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-aria-components@1.21.1(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react-aria@3.52.1(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react-dom@19.3.0(react@19.3.0))(react@19.3.0)(tailwindcss@4.3.3)
+      '@legendapp/state':
+        specifier: 2.1.15
+        version: 2.1.15(react@19.3.0)
+      ahooks:
+        specifier: ^3.10.0
+        version: 3.10.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+      axios:
+        specifier: ^1.0.0
+        version: 1.20.0
+      lucide-react:
+        specifier: ^0.577.0
+        version: 0.577.0(react@19.3.0)
+      next:
+        specifier: ^16.0.0
+        version: 16.3.5(@playwright/test@1.63.0)(@types/node@25.9.8)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+      react:
+        specifier: ^19.2.0
+        version: 19.3.0
+      react-dom:
+        specifier: ^19.2.0
+        version: 19.3.0(react@19.3.0)
+      react-hot-toast:
+        specifier: ^2.6.0
+        version: 2.6.1(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+    devDependencies:
+      '@types/react':
+        specifier: ^19.0.0
+        version: 19.3.0
+      '@types/react-dom':
+        specifier: ^19.0.0
+        version: 19.3.0(@types/react@19.3.0)
+
+  packages/theme: {}
 
   packages/ui:
     dependencies:

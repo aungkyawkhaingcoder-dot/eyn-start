@@ -147,7 +147,7 @@ for (const width of [390, 1440]) {
           await expect(page.locator(".sf-header")).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
           if (style === "glassmorphism") {
             await expect(page.locator(".sf-hero")).not.toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
-            await expect(page.locator(".sf-hero")).toHaveCSS("backdrop-filter", theme === "eyn-light" ? "none" : "blur(8px)");
+            await expect(page.locator(".sf-hero")).toHaveCSS("backdrop-filter", "blur(8px)");
           } else await expect(page.locator(".sf-hero")).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
           await page.screenshot({path:`/tmp/eyn-dark-theme-${style}-${width}.png`});
         }

@@ -1,0 +1,32 @@
+{
+  "name": "@eyn/eyn-admin-console",
+  "private": true,
+  "version": "0.1.0",
+  "scripts": {
+    "dev": "next dev --hostname localhost --port 3002",
+    "build": "next build --webpack",
+    "start": "next start --hostname localhost --port 3002",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@eyn/ui": "workspace:*",
+    "@heroui/react": "^3.0.0",
+    "@heroui/styles": "^3.0.0",
+    "next": "^16.0.0",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "@eyn/auth": "workspace:*",
+    "axios": "^1.0.0",
+    "ahooks": "^3.10.0",
+    "lucide-react": "^0.577.0",
+    "react-hot-toast": "^2.6.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.0.0",
+    "@types/node": "^25.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "tailwindcss": "^4.0.0",
+    "typescript": "^6.0.0"
+  }
+}

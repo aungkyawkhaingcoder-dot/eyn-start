@@ -13,6 +13,14 @@
     "start:dev-server": "pnpm --filter @eyn/api start:dev-server",
     "start:production": "pnpm --filter @eyn/api start:production",
     "db:deploy": "pnpm --filter @eyn/api db:deploy",
-    "test:refresh:integration": "pnpm --filter @eyn/api test:refresh:integration"
+    "test:refresh:integration": "pnpm --filter @eyn/api test:refresh:integration",
+    "dev:landing": "pnpm --filter @eyn/landing dev",
+    "dev:admin": "pnpm --filter @eyn/eyn-admin-console dev",
+    "dev:platform": "pnpm --parallel --filter @eyn/api --filter @eyn/merchant --filter @eyn/landing --filter @eyn/eyn-admin-console --filter @eyn/storefront-app dev",
+    "typecheck:platform": "pnpm --filter @eyn/api exec tsc --noEmit --incremental false && pnpm --filter @eyn/merchant --filter @eyn/landing --filter @eyn/eyn-admin-console --filter @eyn/storefront-app typecheck",
+    "build:platform": "pnpm build && pnpm --filter @eyn/landing --filter @eyn/eyn-admin-console --filter @eyn/storefront-app build",
+    "test:platform": "pnpm --filter @eyn/merchant exec playwright test --config playwright.platform.config.ts",
+    "dev:storefront": "pnpm --filter @eyn/storefront-app dev",
+    "test:public-storefront": "pnpm --filter @eyn/merchant exec playwright test --config playwright.public.config.ts"
   }
 }

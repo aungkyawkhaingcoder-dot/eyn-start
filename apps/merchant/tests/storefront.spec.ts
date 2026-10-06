@@ -50,7 +50,7 @@ test("mobile cart, checkout, retry key and confirmation", async ({ page }) => {
   });
   await page.goto("/shop/studio-goods");
   await expect(
-    page.getByRole("heading", { name: "The collection", exact: true }),
+    page.getByRole("heading", { name: "Our products", exact: true }),
   ).toBeVisible();
   expect(
     await page.evaluate(
@@ -171,7 +171,7 @@ test("desktop and dark mobile visual checks", async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 1000 });
   await page.goto("/shop/studio-goods");
   await expect(
-    page.getByRole("heading", { name: "The collection", exact: true }),
+    page.getByRole("heading", { name: "Our products", exact: true }),
   ).toBeVisible();
   await page.screenshot({
     path: "/private/tmp/eyn-storefront-desktop.png",
@@ -185,7 +185,7 @@ test("desktop and dark mobile visual checks", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("/shop/studio-dark");
   await expect(
-    page.getByRole("heading", { name: "The collection", exact: true }),
+    page.getByRole("heading", { name: "Our products", exact: true }),
   ).toBeVisible();
   expect(
     await page.evaluate(
@@ -202,4 +202,19 @@ test("desktop and dark mobile visual checks", async ({ page }) => {
       () => document.documentElement.scrollWidth <= innerWidth,
     ),
   ).toBe(true);
+});
+test("owner checkout rejection keeps the cart and offers the editor", async ({page})=>{
+ await page.route("**/api/v1/storefront/*/orders",route=>route.fulfill({status:403,json:{message:"You cannot check out from your own store.",error:"Error_OwnerCheckout"}}));
+ await page.goto("/shop/studio-goods");
+ await page.getByRole("button",{name:"Add to cart",exact:true}).first().click();
+ await page.getByRole("button",{name:"Open shopping bag"}).click();
+ await page.getByRole("button",{name:"Continue to checkout"}).click();
+ await page.getByLabel("Full name").fill("Store owner");
+ await page.getByLabel("Phone number").fill("0912345678");
+ await page.getByLabel("Delivery address").fill("12 Sample Street");
+ await page.getByRole("button",{name:"Place order",exact:true}).click();
+ await expect(page.getByRole("dialog").getByRole("alert")).toContainText("your own store");
+ await expect(page.getByRole("link",{name:"Manage your store"})).toHaveAttribute("href",/\/stores\/101\/editor$/);
+ await expect(page.getByRole("button",{name:"Place order",exact:true})).toBeDisabled();
+ expect(await page.evaluate(()=>sessionStorage.getItem('eyn-checkout:101'))).toBeNull();
 });

@@ -1,0 +1,193 @@
+@import "tailwindcss";
+@import "@heroui/styles";
+@import "@eyn/ui/theme.css";
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+}
+a {
+  text-decoration: none;
+  color: inherit;
+}
+button,
+input {
+  font: inherit;
+}
+a:focus-visible,
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid #80632f;
+  outline-offset: 4px;
+}
+main {
+  max-width: 1200px;
+  margin: auto;
+  padding: 28px clamp(20px, 4vw, 56px);
+}
+header,
+nav,
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+header {
+  justify-content: space-between;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--line);
+}
+.brand {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -1px;
+}
+.button {
+  display: inline-flex;
+  padding: 12px 20px;
+  background: var(--ink);
+  color: var(--panel);
+  border-radius: 10px;
+  font-weight: 600;
+}
+.secondary {
+  background: var(--panel);
+  color: var(--ink);
+  border: 1px solid var(--line);
+}
+.eyebrow {
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: #80632f;
+  font-weight: 700;
+}
+h1 {
+  font-size: clamp(38px, 6vw, 76px);
+  line-height: 1.05;
+  letter-spacing: -0.05em;
+  margin: 20px 0;
+}
+h2 {
+  font-size: 28px;
+  letter-spacing: -0.03em;
+}
+p {
+  color: #66665f;
+  line-height: 1.7;
+}
+.hero {
+  padding: 80px 0;
+  display: grid;
+  grid-template-columns: 1.1fr 1fr;
+  gap: 48px;
+  align-items: center;
+}
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  padding: 28px;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+section {
+  scroll-margin-top: 24px;
+  margin-bottom: 40px;
+}
+.preview {
+  background: #e9e7de;
+  border-radius: 12px;
+  padding: 24px;
+  margin-top: 20px;
+}
+.product {
+  height: 130px;
+  display: grid;
+  place-items: center;
+  font-size: 56px;
+  background: #f9f7f1;
+  border-radius: 10px;
+}
+.row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line);
+}
+.muted {
+  font-size: 13px;
+  color: #777;
+}
+footer {
+  padding: 28px 0;
+  border-top: 1px solid var(--line);
+}
+form {
+  display: grid;
+  gap: 16px;
+  max-width: 400px;
+}
+label {
+  display: grid;
+  gap: 8px;
+}
+input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: white;
+}
+button {
+  cursor: pointer;
+}
+button:disabled {
+  cursor: wait;
+  opacity: 0.6;
+}
+.error {
+  color: #a02323;
+}
+.login {
+  max-width: 520px;
+  margin: 64px auto;
+}
+.login h1 {
+  font-size: 36px;
+}
+.console-title {
+  font-size: 42px;
+}
+.badge {
+  display: inline-block;
+  font-size: 12px;
+  background: #f1efe8;
+  padding: 5px 9px;
+  border-radius: 6px;
+}
+@media (max-width: 760px) {
+  .hero,
+  .grid {
+    grid-template-columns: 1fr;
+  }
+  .hero {
+    padding: 40px 0;
+    gap: 24px;
+  }
+  header {
+    gap: 16px;
+  }
+  h1 {
+    font-size: 44px;
+  }
+  .panel {
+    padding: 22px;
+  }
+}
