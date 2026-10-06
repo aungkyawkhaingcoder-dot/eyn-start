@@ -23,7 +23,7 @@ const prisma = {
       store: {
         findFirst: async ({ where }) =>
           draft.published && where.slug === "shop-a"
-            ? { id: 10, currency: "MMK" }
+            ? { id: 10, currency: "MMK", ownerId: 7 }
             : null,
       },
       product: {
@@ -184,5 +184,15 @@ test("completed orders require confirmation and cannot be cancelled", async () =
     changeOrderStatus(7, 10, 1, "CANCELLED"),
     (e) => e.status === 409,
   );
+  assert.equal(state.stock, 3);
+});
+
+test("owner checkout is rejected before stock writes and even for an existing retry key", async () => {
+  await assert.rejects(createOrder("shop-a", input, "owner-checkout-key", 7), e => e.status === 403 && e.code === "Error_OwnerCheckout");
+  assert.equal(state.stock, 5);
+  assert.equal(state.orders.length, 0);
+  await createOrder("shop-a", input, "other-buyer-key-0001", 8);
+  await assert.rejects(createOrder("shop-a", input, "other-buyer-key-0001", 7), e => e.status === 403);
+  assert.equal(state.orders.length, 1);
   assert.equal(state.stock, 3);
 });

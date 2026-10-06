@@ -6,13 +6,8 @@ const { PGlite } = require("@electric-sql/pglite");
 test("storefront migration preserves legacy products and imports store catalog without ID collisions", async () => {
   const db = new PGlite();
   try {
-    const root = join(__dirname, "../prisma/migrations");
-    for (const folder of readdirSync(root)
-      .filter((n) => n.startsWith("20"))
-      .sort()) {
-      if (folder === "20260928000100_storefront_checkout") break;
-      await db.exec(readFileSync(join(root, folder, "migration.sql"), "utf8"));
-    }
+    const root = join(__dirname, "fixtures/legacy-storefront");
+    await db.exec(readFileSync(join(root, "before-checkout.sql"), "utf8"));
     await db.exec(`INSERT INTO "User" ("email","randomToken","updatedAt") VALUES ('test@example.com','test',NOW());
    INSERT INTO "Store" ("ownerId","name","slug","updatedAt") VALUES (1,'Sample','sample',NOW());
    INSERT INTO "Category" ("name") VALUES ('Legacy'); INSERT INTO "Type" ("name") VALUES ('Legacy');
@@ -20,7 +15,7 @@ test("storefront migration preserves legacy products and imports store catalog w
    INSERT INTO "StoreProduct" ("storeId","name","price","inventory","published","updatedAt") VALUES (1,'Store item',20.35,5,true,NOW());`);
     await db.exec(
       readFileSync(
-        join(root, "20260928000100_storefront_checkout/migration.sql"),
+        join(root, "checkout.sql"),
         "utf8",
       ),
     );
@@ -58,4 +53,19 @@ test("storefront migration preserves legacy products and imports store catalog w
   } finally {
     await db.close();
   }
+});
+
+test("current consolidated migrations initialize an empty storefront database", async () => {
+ const db = new PGlite();
+ try {
+  const root=join(__dirname,"../prisma/migrations");
+  for(const folder of readdirSync(root).filter(n=>n.startsWith("20")).sort()) {
+   await db.exec(readFileSync(join(root,folder,"migration.sql"),"utf8"));
+  }
+  const columns=(await db.query(`SELECT column_name FROM information_schema.columns WHERE table_name = 'Store'`)).rows.map(row=>row.column_name);
+  assert.ok(columns.includes("storefrontConfig"));
+  assert.ok(columns.includes("published"));
+  await db.query('SELECT "requestKey", "storeId", "totalPrice" FROM "Order" LIMIT 0');
+  await db.query('SELECT "legacyStoreProductId", "inventory", "published" FROM "Product" LIMIT 0');
+ } finally {await db.close();}
 });

@@ -21,7 +21,15 @@ export async function saveStore(ownerId: number, input: unknown, id?: number) {
   const data = storeInput(input);
   try {
     if (id === undefined)
-      return await prisma.store.create({ data: { ...data, ownerId } });
+      return await prisma.$transaction(async (tx) => {
+        const store = await tx.store.create({ data: { ...data, ownerId } });
+        // Only promote customers. An administrator keeps their platform role.
+        await tx.user.updateMany({
+          where: { id: ownerId, role: "CUSTOMER" },
+          data: { role: "MERCHANT" },
+        });
+        return store;
+      });
     // Ownership is part of the write predicate, not a client-provided field.
     return await prisma.store.update({ where: { id, ownerId }, data });
   } catch (error) {

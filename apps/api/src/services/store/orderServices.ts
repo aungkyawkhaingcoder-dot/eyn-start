@@ -12,7 +12,7 @@ const receiptSelect = {
   currency: true,
   createdAt: true,
 } as const;
-export async function createOrder(slug: string, input: unknown, key: unknown) {
+export async function createOrder(slug: string, input: unknown, key: unknown, buyerId?: number) {
   const data = checkoutInput(input),
     idempotencyKey = requestKey(key);
   const hash = createHash("sha256").update(JSON.stringify(data)).digest("hex");
@@ -23,10 +23,16 @@ export async function createOrder(slug: string, input: unknown, key: unknown) {
         async (tx) => {
           const store = await tx.store.findFirst({
             where: { slug, published: true, owner: { status: "ACTIVE" } },
-            select: { id: true, currency: true },
+            select: { id: true, currency: true, ownerId: true },
           });
           if (!store)
             throw createError("Store not found.", 404, "Error_NotFound");
+          if (buyerId !== undefined && store.ownerId === Number(buyerId))
+            throw createError(
+              "You cannot check out from your own store. Use the editor to preview your store.",
+              403,
+              "Error_OwnerCheckout",
+            );
           const existing = await tx.order.findUnique({
             where: {
               storeId_requestKey: {

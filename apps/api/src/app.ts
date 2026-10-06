@@ -6,6 +6,7 @@ import morgan from "morgan";
 import { limiter } from "./middleware/raterLimiter";
 import authRouter from './routes/v1/auth';
 import userRouter from "./routes/admin/userRoute";
+import { checkoutSession } from "./middleware/checkoutSession";
 import { authMiddleware } from "./middleware/auth";
 import cookieParser from "cookie-parser";
 import { readServerConfig } from "./config/server";
@@ -65,7 +66,7 @@ app.get("/healthz", (_req, res) => { res.status(200).json({ status: "ok" }); });
 // Routes
 app.use('/api/v1/profile',routerLanguage);
 app.get('/api/v1/storefront/:slug', getPublicStore);
-app.post('/api/v1/storefront/:slug/orders', rateLimit({ windowMs: 60000, limit: 10, standardHeaders: true, legacyHeaders: false }), checkout);
+app.post('/api/v1/storefront/:slug/orders', rateLimit({ windowMs: 60000, limit: 10, standardHeaders: true, legacyHeaders: false }), checkoutSession, checkout);
 app.use('/api/v1/stores', authMiddleware, storeRouter);
 app.use('/api/v1', authRouter)
 

@@ -42,3 +42,12 @@ test('best sellers are scoped to completed orders in the same store',async()=>{
  };
  try{assert.deepEqual((await service.publicStore('eyn-studio')).bestSellerIds,[5,2]);}finally{prisma.store.findFirst=original;prisma.productsOnOrder.groupBy=group;}
 });
+test('store creation promotes customers but preserves admin role and ignores client roles',async()=>{
+ let role='CUSTOMER';let created=false;
+ prisma.store.create=async({data})=>{assert.equal(data.role,undefined);created=true;return {id:11,...data};};
+ prisma.user={updateMany:async({where,data})=>{assert.equal(created,true);assert.equal(where.id,1);if(role===where.role)role=data.role;return {count:1};}};
+ await service.saveStore(1,{...draft,role:'ADMIN'});assert.equal(role,'MERCHANT');
+ role='ADMIN';await service.saveStore(1,draft);assert.equal(role,'ADMIN');
+ role='CUSTOMER';prisma.store.create=async()=>{throw Object.assign(Error(),{code:'P2002'});};
+ await assert.rejects(service.saveStore(1,draft),e=>e.status===409);assert.equal(role,'CUSTOMER');
+});

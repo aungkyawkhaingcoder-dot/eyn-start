@@ -1,0 +1,1 @@
+Historical SQL from `e5ae518^` retained only for the legacy data-preservation regression test. These files are fixtures, not deployable migrations. Current migrations are tested separately. Do not restore these into prisma/migrations alongside the consolidated baseline.

@@ -8,6 +8,7 @@ export async function checkoutHandler(req: Request, res: Response) {
     String(req.params.slug),
     req.body,
     req.headers["idempotency-key"],
+    (req as Request & { userId?: number }).userId,
   );
   res.setHeader("Cache-Control", "no-store");
   return res.status(201).json(result);

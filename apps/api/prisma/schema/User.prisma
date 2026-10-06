@@ -15,7 +15,7 @@ model User {
   image           String?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
-  role            Role      @default(USER)
+  role            Role      @default(CUSTOMER)
   orders          Order[]
   posts           Post[]
   stores          Store[]
@@ -23,9 +23,9 @@ model User {
 }
 
 enum Role {
-  USER
+  CUSTOMER
+  MERCHANT
   ADMIN
-  AUTHOR
 }
 
 enum Status {

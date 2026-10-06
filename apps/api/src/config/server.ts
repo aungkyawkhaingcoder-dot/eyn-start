@@ -10,7 +10,7 @@ export function readServerConfig() {
     throw new Error("Online development and production servers require NODE_ENV=production");
   }
   const origins = (process.env.CORS_ORIGINS ?? (hosted ? "" :
-    "http://localhost:3000,http://localhost:3001,http://localhost:5173"))
+    "http://localhost:3000,http://localhost:3001,http://localhost:3002,http://localhost:3003,http://localhost:5173"))
     .split(",").map(value => value.trim()).filter(Boolean);
   if (!origins.length) throw new Error("CORS_ORIGINS must list the allowed frontend origins");
   for (const origin of origins) {
